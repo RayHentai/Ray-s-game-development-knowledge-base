@@ -437,7 +437,7 @@ public float GetMoney2(DiscountInfo info, float money) => info switch
 
 ---
 
-# API速查
+## API速查
 
 
 ---

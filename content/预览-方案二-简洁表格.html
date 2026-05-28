@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>方案二预览 · 简洁表格</title>
+<style>
+  /* Quartz 色彩变量模拟（亮色模式） */
+  :root {
+    --light: #faf8f8;
+    --lightgray: #e5e5e5;
+    --gray: #b8b8b8;
+    --darkgray: #4e4e4e;
+    --dark: #2b2b2b;
+    --secondary: #284b63;
+    --tertiary: #84a98c;
+    --highlight: rgba(143, 159, 169, 0.15);
+    --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --light: #1c1c1e;
+      --lightgray: #2c2c2e;
+      --gray: #6e6e73;
+      --darkgray: #aeaeb2;
+      --dark: #f2f2f7;
+      --secondary: #7da5c0;
+    }
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font-body);
+    background: var(--light);
+    color: var(--dark);
+    line-height: 1.7;
+    padding: 2rem 1rem 4rem;
+  }
+
+  /* 模拟 Quartz 页面宽度 */
+  .page {
+    max-width: 720px;
+    margin: 0 auto;
+  }
+
+  /* 标题 */
+  h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--dark);
+    margin-bottom: 0.75rem;
+  }
+  h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--dark);
+    margin: 2rem 0 0.75rem;
+    padding-bottom: 0.3rem;
+    border-bottom: 1px solid var(--lightgray);
+  }
+
+  /* 引用块 */
+  blockquote {
+    border-left: 3px solid var(--secondary);
+    padding: 0.6rem 1rem;
+    color: var(--gray);
+    font-size: 0.92rem;
+    margin: 0 0 1.5rem;
+    background: none;
+  }
+  blockquote p { margin: 0; }
+
+  /* 分割线 */
+  hr {
+    border: none;
+    border-top: 1px solid var(--lightgray);
+    margin: 1.5rem 0;
+  }
+
+  /* 表格 */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.93rem;
+    margin-bottom: 0.5rem;
+  }
+  th {
+    background: var(--lightgray);
+    color: var(--dark);
+    font-weight: 600;
+    padding: 0.55rem 0.8rem;
+    text-align: left;
+  }
+  td {
+    padding: 0.5rem 0.8rem;
+    border-bottom: 1px solid var(--lightgray);
+    vertical-align: middle;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--lightgray); transition: background 0.12s; }
+
+  /* 链接 */
+  a {
+    color: var(--secondary);
+    text-decoration: none;
+  }
+  a:hover { text-decoration: underline; }
+
+  /* 尾部 */
+  .footer-note {
+    margin-top: 2.5rem;
+    font-size: 0.8rem;
+    color: var(--gray);
+  }
+
+  /* 模式切换按钮（用于预览） */
+  .toggle-btn {
+    position: fixed;
+    top: 1rem; right: 1rem;
+    background: var(--lightgray);
+    color: var(--dark);
+    border: 1px solid var(--gray);
+    border-radius: 8px;
+    padding: 0.35rem 0.8rem;
+    font-size: 0.8rem;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<button class="toggle-btn" onclick="toggleDark()">🌙 深色模式</button>
+
+<div class="page">
+
+  <h1>🧠 我的知识库</h1>
+
+  <blockquote>
+    <p>游戏开发学习笔记，涵盖编程语言、引擎、框架与理论基础。</p>
+    <p>参考资料：代码随想录 · 唐老狮 Unity 课程</p>
+  </blockquote>
+
+  <hr>
+
+  <h2>📦 知识模块</h2>
+  <table>
+    <thead>
+      <tr><th>模块</th><th>内容概述</th><th>完成状态</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><a href="#">💻 编程语言</a></td><td>C#、C++、Lua</td><td>🟡 进行中</td></tr>
+      <tr><td><a href="#">🎮 Unity</a></td><td>入门 → 进阶 → UI → 数据持久化 → 热更新 → 网络</td><td>🟡 进行中</td></tr>
+      <tr><td><a href="#">🔲 框架</a></td><td>MVC、程序基础框架</td><td>⬜ 待开始</td></tr>
+      <tr><td><a href="#">📚 理论基础</a></td><td>算法、OS、网络、图形学等 8 门</td><td>🟡 进行中</td></tr>
+      <tr><td><a href="#">🚀 StarForge · 星铸</a></td><td>独立游戏项目开发记录</td><td>🟡 进行中</td></tr>
+      <tr><td><a href="#">🤖 AI QA</a></td><td>AI 问答与成长记录</td><td>🟡 进行中</td></tr>
+    </tbody>
+  </table>
+
+  <hr>
+
+  <h2>🔥 最近在学</h2>
+  <table>
+    <thead>
+      <tr><th>主题</th><th>位置</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Lua 元表与面向对象</td><td><a href="#">Lua 核心语法</a></td></tr>
+      <tr><td>数据结构和算法</td><td><a href="#">05-📊数据结构和算法</a></td></tr>
+      <tr><td>Unity 热更新</td><td><a href="#">07-🔄热更新</a></td></tr>
+    </tbody>
+  </table>
+
+  <hr>
+
+  <h2>⚡ 快速工具</h2>
+  <table>
+    <thead>
+      <tr><th>工具</th><th>用途</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><a href="#">C# 概念速查</a></td><td>快速定位 C# 概念所在文件</td></tr>
+      <tr><td><a href="#">C# 关键字速查</a></td><td>C# 所有保留关键字一览</td></tr>
+      <tr><td><a href="#">Lua vs C# 语法对比</a></td><td>从 C# 学 Lua 的排雷手册</td></tr>
+      <tr><td><a href="#">Lua 元方法速查</a></td><td>元表开发常用参考</td></tr>
+    </tbody>
+  </table>
+
+  <p class="footer-note">最后更新：2025-05</p>
+
+</div>
+
+<script>
+  let dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  function toggleDark() {
+    dark = !dark;
+    const btn = document.querySelector('.toggle-btn');
+    if (dark) {
+      document.documentElement.style.setProperty('--light', '#1c1c1e');
+      document.documentElement.style.setProperty('--lightgray', '#2c2c2e');
+      document.documentElement.style.setProperty('--gray', '#6e6e73');
+      document.documentElement.style.setProperty('--darkgray', '#aeaeb2');
+      document.documentElement.style.setProperty('--dark', '#f2f2f7');
+      document.documentElement.style.setProperty('--secondary', '#7da5c0');
+      btn.textContent = '☀️ 亮色模式';
+    } else {
+      document.documentElement.style.setProperty('--light', '#faf8f8');
+      document.documentElement.style.setProperty('--lightgray', '#e5e5e5');
+      document.documentElement.style.setProperty('--gray', '#b8b8b8');
+      document.documentElement.style.setProperty('--darkgray', '#4e4e4e');
+      document.documentElement.style.setProperty('--dark', '#2b2b2b');
+      document.documentElement.style.setProperty('--secondary', '#284b63');
+      btn.textContent = '🌙 深色模式';
+    }
+  }
+</script>
+</body>
+</html>

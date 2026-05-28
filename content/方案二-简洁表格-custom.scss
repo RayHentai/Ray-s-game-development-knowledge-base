@@ -1,0 +1,35 @@
+// ── 方案二：简洁表格主页 ────────────────────────────────
+
+// 表格整体宽松
+article table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.93rem;
+
+  th {
+    background: var(--lightgray);
+    color: var(--dark);
+    font-weight: 600;
+    padding: 0.55rem 0.8rem;
+    text-align: left;
+  }
+
+  td {
+    padding: 0.5rem 0.8rem;
+    border-bottom: 1px solid var(--lightgray);
+    vertical-align: middle;
+  }
+
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--lightgray); }
+}
+
+// 引用块
+article blockquote {
+  border-left: 3px solid var(--secondary);
+  padding: 0.6rem 1rem;
+  color: var(--gray);
+  font-size: 0.92rem;
+  margin: 0 0 1.5rem;
+  background: none;
+}
