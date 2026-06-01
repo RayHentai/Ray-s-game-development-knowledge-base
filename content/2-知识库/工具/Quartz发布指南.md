@@ -10,6 +10,7 @@
 C:\Users\Administrator\quartz\sync.ps1
 ```
 等出现 `done!` 后，约 1-2 分钟网站自动更新。
+再用 `Ctrl + Shift + R` 强制刷新，就能看到最新内容了。
 
 ### 本地预览
 打开**命令行（管理员）**，运行：

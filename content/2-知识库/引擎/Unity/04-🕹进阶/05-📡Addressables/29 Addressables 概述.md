@@ -1,7 +1,7 @@
 # 29 Addressables 概述
 
 **所属模块**：[[00 Unity 进阶阶段总览]]
-**关联**：[[]] | [[]]
+**关联**：[[01 AssetBundle]] | [[]]
 **查阅次数**：0
 
 ---
@@ -31,30 +31,44 @@ Addressables翻译过来是可寻址的意思，它是**可寻址资源管理系
 
 ---
 
-## 语法 / 用法
+## 导入 和 创建配置文件
 
-```csharp
-// 基本语法写这里
-// 注释要解释"为什么"，不只是"是什么"
-```
+**导入：windows -> Package -> Addressables**
+
+**创建配置文件：**
+**方法一：打开资源组窗口**
+1. Window——>Asset Management——>Addressables——>Groups
+2. 在窗口中点击 Create Addressables Settings按钮 创建配置文件
+![[Addressables 创建配置文件 图示1.png|391]]
+
+
+**方法二：在Inspector窗口中为资源勾选Addressable**
+如果没有创建过配置相关文件，这时会自动创建相关文件
+![[Addressables 创建配置文件 图示2.png|466]]
 
 ---
 
-## 详细说明
+## 资源加载方式对比
 
-> 展开讲解，可以分多个子章节
+**1. Resources**
+特点：应用程序发布后不能动态修改、本地
 
-### 情况一
 
-```csharp
+**2. AssetBundle**
+特点：减小包体大小、热更新
 
-```
+**3. Addressable**
+特点：基于AssetBundle，帮助管理AssetBundle
 
-### 情况二
+Resources比较适用于做小游戏，单机游戏
 
-```csharp
+AssetBundle和Addressables适合商业游戏具体AssetBundle和Addressables怎么选主要看团队和公司
 
-```
+如果是老项目或者迭代项目那么用以前写好的AssetBundle管理器即可，如果是新项目可以尝试使用Addressables，使用上更加方便
+
+
+
+
 
 ---
 
@@ -68,48 +82,12 @@ Addressables翻译过来是可寻址的意思，它是**可寻址资源管理系
 
 ---
 
-## 和相关概念的区别
-
-| 概念 A | 概念 B | 区别说明 |
-|--------|--------|----------|
-| | | |
-| | | |
-
----
-
 ## 注意事项 / 易错点
 
 > ⚠️ 把容易踩的坑提前列出来
 
 - 
 - 
-
----
-
-## 优先级 / 执行顺序
-
-> 如果涉及优先级、执行顺序、作用域等，在这里说明
-
----
-
-## 练习
-
-> 1. 练习题描述
-
-```csharp
-// 答案
-```
-
-> 2. 练习题描述
-
-```csharp
-// 答案
-```
-
----
-
-## API速查
-
 
 ---
 

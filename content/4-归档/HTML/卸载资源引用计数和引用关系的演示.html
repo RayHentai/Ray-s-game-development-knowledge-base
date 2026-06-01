@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Addressable流程</title>
+</head>
+<body>
+<h2 class="sr-only">关于卸载资源引用计数和引用关系的演示</h2>
+<div style="padding:1.5rem 0;">
+
+<div style="display:flex; gap:12px; margin-bottom:1.5rem; flex-wrap:wrap; align-items:center;">
+  <button id="prevBtn" onclick="step(-1)" style="min-width:80px;" disabled>上一步</button>
+  <button id="nextBtn" onclick="step(1)" style="min-width:80px;">下一步 →</button>
+  <button onclick="reset()" style="min-width:80px;">重置</button>
+  <span id="stepLabel" style="font-size:13px; color:var(--color-text-secondary);">步骤 0 / 4</span>
+</div>
+
+<div id="canvas" style="overflow-x:auto; margin-bottom:1rem;"></div>
+
+<div style="margin-top:1rem;">
+  <button onclick="toggleSection('explainSection','explainToggle')" style="font-size:13px;width:100%;text-align:left;padding:8px 12px;display:flex;justify-content:space-between;align-items:center;">
+    <span>查看步骤说明</span>
+    <span id="explainToggle" style="font-size:11px;color:var(--color-text-secondary);">展开 ▼</span>
+  </button>
+  <div id="explainSection" style="display:none;background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:1rem;font-size:14px;color:var(--color-text-secondary);margin-top:4px;"></div>
+</div>
+
+<div style="margin-top:8px;">
+  <button onclick="toggleSection('codeSection','codeToggle')" style="font-size:13px;width:100%;text-align:left;padding:8px 12px;display:flex;justify-content:space-between;align-items:center;">
+    <span>查看对应代码</span>
+    <span id="codeToggle" style="font-size:11px;color:var(--color-text-secondary);">展开 ▼</span>
+  </button>
+  <div id="codeSection" style="display:none;background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:1rem;font-family:var(--font-mono);font-size:12px;line-height:1.8;color:var(--color-text-secondary);margin-top:4px;"></div>
+</div>
+
+</div>
+
+<script>
+const steps = [
+  {
+    explain: "初始状态：磁盘上有材质资源，内存中还没有加载。materialRed（AssetReference）登记表为空，obj（Handle）不存在，cube的材质是默认材质。",
+    code: "// 还没有执行任何加载",
+    state: "init"
+  },
+  {
+    explain: "执行 LoadAssetAsync()：Addressables从磁盘把材质加载进内存，引用计数变为1。materialRed.Asset 指向内存中的材质对象，obj.Result 也指向同一个对象。",
+    code: "materialRed.LoadAssetAsync<Material>().Completed += (obj) => {\n    // obj.Result 指向内存中的材质对象\n    // materialRed.Asset 也指向同一对象\n    // 引用计数 = 1\n};",
+    state: "loaded"
+  },
+  {
+    explain: "执行赋值：cube.material = obj.Result，cube的材质渲染器也指向同一个内存对象。此时有三个引用指向材质对象：materialRed.Asset、obj.Result、cube.material。",
+    code: "cube.GetComponent<Renderer>().material = obj.Result;\n// 现在三个引用都指向同一个材质对象",
+    state: "assigned"
+  },
+  {
+    explain: "执行 ReleaseAsset()：Addressables引用计数归零，主动卸载内存中的材质对象。materialRed.Asset 变为 null（登记表清空）。但 obj.Result 和 cube.material 的引用指针还在，只是指向的内存已被卸载，所以 cube 上的材质丢失变粉红。",
+    code: "materialRed.ReleaseAsset();\n// materialRed.Asset == null  ← 登记表清空\n// obj.Result != null         ← 指针还在，但内存已卸载\n// cube.material != null      ← 指针还在，但渲染丢失",
+    state: "released"
+  },
+];
+
+let current = 0;
+
+function toggleSection(sid, tid) {
+  const s = document.getElementById(sid);
+  const t = document.getElementById(tid);
+  if (!s||!t) return;
+  if (s.style.display==='none') { s.style.display='block'; t.textContent='收起 ▲'; }
+  else { s.style.display='none'; t.textContent='展开 ▼'; }
+}
+
+function render() {
+  const st = steps[current];
+  const W=620, H=260;
+  let svg = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:${W}px;" role="img"><title>Addressable资源流程</title>`;
+  svg += `<defs>
+    <marker id="ar" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3z" fill="#534AB7"/></marker>
+    <marker id="ag" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3z" fill="#0F6E56"/></marker>
+    <marker id="ao" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3z" fill="#854F0B"/></marker>
+    <marker id="agr" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3z" fill="#888780"/></marker>
+  </defs>`;
+
+  const s = st.state;
+
+  // === 磁盘区域 ===
+  svg += `<rect x="10" y="10" width="120" height="60" rx="8" fill="#F1EFE8" stroke="#B4B2A9" stroke-width="1.2"/>`;
+  svg += `<text x="70" y="32" text-anchor="middle" font-size="11" fill="#5F5E5A" font-weight="500">磁盘</text>`;
+  svg += `<rect x="25" y="40" width="90" height="22" rx="4" fill="#E1F5EE" stroke="#0F6E56" stroke-width="1"/>`;
+  svg += `<text x="70" y="55" text-anchor="middle" font-size="11" fill="#085041">材质资源(.mat)</text>`;
+
+  // === 内存区域 ===
+  const memExists = s === 'loaded' || s === 'assigned';
+  const memColor = memExists ? '#E6F1FB' : '#F5F4F0';
+  const memStroke = memExists ? '#185FA5' : '#C8C6BF';
+  const memText = memExists ? '#0C447C' : '#B4B2A9';
+  svg += `<rect x="220" y="10" width="160" height="80" rx="8" fill="${memColor}" stroke="${memStroke}" stroke-width="1.5"/>`;
+  svg += `<text x="300" y="30" text-anchor="middle" font-size="11" fill="${memText}" font-weight="500">内存</text>`;
+  if (memExists) {
+    svg += `<rect x="235" y="38" width="130" height="42" rx="4" fill="#185FA5" stroke="#0C447C" stroke-width="1"/>`;
+    svg += `<text x="300" y="55" text-anchor="middle" font-size="11" fill="white" font-weight="500">Material对象</text>`;
+    svg += `<text x="300" y="70" text-anchor="middle" font-size="10" fill="#BDD9F5">引用计数 = 1</text>`;
+  } else if (s === 'released') {
+    svg += `<text x="300" y="55" text-anchor="middle" font-size="11" fill="#C8C6BF">已卸载</text>`;
+    svg += `<line x1="240" y1="35" x2="360" y2="75" stroke="#E05C5C" stroke-width="1.5"/>`;
+    svg += `<line x1="360" y1="35" x2="240" y2="75" stroke="#E05C5C" stroke-width="1.5"/>`;
+  } else {
+    svg += `<text x="300" y="55" text-anchor="middle" font-size="11" fill="#C8C6BF">空</text>`;
+  }
+
+  // 磁盘→内存 箭头（加载时）
+  if (s === 'loaded' || s === 'assigned') {
+    svg += `<line x1="132" y1="50" x2="218" y2="50" stroke="#0F6E56" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#ag)"/>`;
+    svg += `<text x="175" y="44" text-anchor="middle" font-size="9" fill="#0F6E56">加载</text>`;
+  }
+
+  // === 引用区域 ===
+  // materialRed
+  const mrColor = s==='init' ? '#F1EFE8' : (s==='released' ? '#FDE8E8' : '#EEEDFE');
+  const mrStroke = s==='init' ? '#B4B2A9' : (s==='released' ? '#C0392B' : '#534AB7');
+  const mrText = s==='init' ? '#B4B2A9' : (s==='released' ? '#C0392B' : '#3C3489');
+  svg += `<rect x="10" y="130" width="140" height="36" rx="6" fill="${mrColor}" stroke="${mrStroke}" stroke-width="1.5"/>`;
+  svg += `<text x="80" y="145" text-anchor="middle" font-size="11" fill="${mrText}" font-weight="500">materialRed</text>`;
+  svg += `<text x="80" y="159" text-anchor="middle" font-size="10" fill="${mrText}">.Asset = ${s==='released'?'null': (s==='init'?'null':'Material')}</text>`;
+
+  // obj.Result
+  const objColor = s==='init' ? '#F1EFE8' : '#EEEDFE';
+  const objStroke = s==='init' ? '#B4B2A9' : '#534AB7';
+  const objText = s==='init' ? '#B4B2A9' : '#3C3489';
+  svg += `<rect x="10" y="185" width="140" height="36" rx="6" fill="${objColor}" stroke="${objStroke}" stroke-width="1.5"/>`;
+  svg += `<text x="80" y="200" text-anchor="middle" font-size="11" fill="${objText}" font-weight="500">obj (Handle)</text>`;
+  svg += `<text x="80" y="214" text-anchor="middle" font-size="10" fill="${objText}">.Result = ${s==='init'?'(不存在)':'Material*'}</text>`;
+
+  // cube.material
+  const cubeColor = s==='assigned'||s==='released' ? '#FAEEDA' : '#F1EFE8';
+  const cubeStroke = s==='assigned'||s==='released' ? '#854F0B' : '#B4B2A9';
+  const cubeText = s==='assigned'||s==='released' ? '#633806' : '#B4B2A9';
+  svg += `<rect x="430" y="130" width="160" height="36" rx="6" fill="${cubeColor}" stroke="${cubeStroke}" stroke-width="1.5"/>`;
+  svg += `<text x="510" y="145" text-anchor="middle" font-size="11" fill="${cubeText}" font-weight="500">cube.material</text>`;
+  svg += `<text x="510" y="159" text-anchor="middle" font-size="10" fill="${cubeText}">${s==='assigned'?'→ Material': (s==='released'?'→ (内存已卸载)':'= default')}</text>`;
+
+  // 引用箭头 materialRed → 内存
+  if (s==='loaded' || s==='assigned') {
+    svg += `<path d="M150,145 Q200,120 218,70" stroke="#534AB7" stroke-width="1.5" fill="none" marker-end="url(#ar)"/>`;
+  }
+  // 引用箭头 obj → 内存
+  if (s==='loaded' || s==='assigned') {
+    svg += `<path d="M150,200 Q200,180 218,80" stroke="#534AB7" stroke-width="1.5" fill="none" marker-end="url(#ar)"/>`;
+  }
+  // cube → 内存
+  if (s==='assigned') {
+    svg += `<path d="M430,145 Q380,120 382,70" stroke="#854F0B" stroke-width="1.5" fill="none" marker-end="url(#ao)"/>`;
+  }
+  // released 虚线断开
+  if (s==='released') {
+    svg += `<path d="M150,145 Q200,120 218,70" stroke="#C8C6BF" stroke-width="1.2" fill="none" stroke-dasharray="4,3"/>`;
+    svg += `<text x="185" y="105" font-size="10" fill="#C0392B">✕</text>`;
+    svg += `<path d="M150,200 Q200,180 218,80" stroke="#C8C6BF" stroke-width="1.2" fill="none" stroke-dasharray="4,3"/>`;
+    svg += `<path d="M430,145 Q380,120 382,70" stroke="#C8C6BF" stroke-width="1.2" fill="none" stroke-dasharray="4,3"/>`;
+    svg += `<text x="402" y="100" font-size="10" fill="#C0392B">✕</text>`;
+  }
+
+  svg += `</svg>`;
+  document.getElementById('canvas').innerHTML = svg;
+
+  const codeEl = document.getElementById('codeSection');
+  if (codeEl) codeEl.innerHTML = st.code.split('\n').map(l=>`<div>${l}</div>`).join('');
+
+  document.getElementById('explainSection').textContent = st.explain;
+  document.getElementById('stepLabel').textContent = `步骤 ${current} / ${steps.length-1}`;
+  document.getElementById('prevBtn').disabled = current===0;
+  document.getElementById('nextBtn').disabled = current===steps.length-1;
+}
+
+function step(dir) {
+  current = Math.max(0, Math.min(steps.length-1, current+dir));
+  render();
+}
+function reset() { current=0; render(); }
+render();
+</script>
+</body>
+</html>

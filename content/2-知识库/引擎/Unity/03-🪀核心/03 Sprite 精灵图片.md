@@ -177,8 +177,7 @@ public class Sprite_Move : MonoBehaviour
 ## Sprite Creator
 
 > Sprite Creator是精灵创造者
-> 我们可以利用spriteEditor的多边形工具创造出各种多边形
-> Unity也为我们提供了现成的一些多边形
+> 可以利用spriteEditor的多边形工具创造出各种多边形，Unity也提供了现成的一些多边形
 
 它的主要作用是2D游戏的替代资源
 在等待美术出资源时我们可以用他们作为替代品
@@ -302,6 +301,7 @@ Create -> 2D -> Sprtie Atles
 ### 参数
 
 **打图集面板参数**
+
 ![[主图集参数.png]]
 ![[变体类型的图集.png]]
 ![[图集 Default.png]]
@@ -341,7 +341,7 @@ public class Sprite_Atlas : MonoBehaviour
 
 > 2. 在场景中有3张图片，3张图片叠在一起放，最底层和最上层的图片在一个图集中，中间的图片和他们两不在一个图集中，请告诉我当前的DrawCall数量是多少?
 
-3
+`3`
 
 ---
 
