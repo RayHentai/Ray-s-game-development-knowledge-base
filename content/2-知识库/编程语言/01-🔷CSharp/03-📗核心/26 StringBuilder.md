@@ -75,7 +75,6 @@ StringBuilder str2 = new StringBuilder(字符串, 容量);  // 可不加容量
 
 > 1. 请描述 string 和 StringBuilder 的区别
 
-
 string：
 - 每次修改拼接都会产生垃圾，更加灵活，方法更多。
 - 适用：少量修改，或需要用 string 特有方法的场景。
@@ -84,9 +83,7 @@ StringBuilder：
 - 修改字符串不创建新对象，不产生垃圾，性能更好。
 - 适用：需要频繁修改/拼接字符串的场景。
 
-
 > 2. 如何优化内存
-
 
 节约内存：少 new 新对象，少产生垃圾
 尽力减少 GC：合理使用 static、string、StringBuilder
