@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>C# GC 垃圾回收过程可视化</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f0;color:#1a1a18;padding:2rem 1rem}
+.container{max-width:720px;margin:0 auto}
+h1{font-size:18px;font-weight:500;margin-bottom:1.5rem;color:#1a1a18}
+.wrap{font-size:14px;color:#1a1a18}
+.top-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:8px}
+.step-counter{font-size:13px;color:#5f5e5a}
+.controls{display:flex;gap:8px}
+.btn{padding:6px 14px;font-size:13px;border:0.5px solid #88888880;border-radius:8px;background:transparent;color:#1a1a18;cursor:pointer;transition:background 0.15s}
+.btn:hover{background:#e8e6df}
+.btn:disabled{opacity:0.35;cursor:default}
+.scene{border:0.5px solid #d0cec5;border-radius:12px;padding:1.25rem;background:#eeecea;margin-bottom:1rem;min-height:220px}
+.scene-title{font-size:12px;font-weight:500;color:#5f5e5a;margin-bottom:12px;text-transform:uppercase;letter-spacing:.04em}
+.heap-row{display:flex;gap:6px;align-items:flex-start;flex-wrap:wrap;margin-bottom:8px}
+.heap-label{font-size:12px;color:#5f5e5a;width:56px;flex-shrink:0;padding-top:8px}
+.cells{display:flex;gap:4px;flex-wrap:wrap}
+.cell{width:44px;height:36px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;transition:all 0.35s;border:0.5px solid transparent}
+.cell.live{background:#E6F1FB;border-color:#378ADD;color:#0C447C}
+.cell.dead{background:#FCEBEB;border-color:#E24B4A;color:#A32D2D}
+.cell.empty{background:#fff;border-color:#d0cec5;color:#888780}
+.cell.marked{background:#EAF3DE;border-color:#639922;color:#27500A}
+.cell.large{background:#FAEEDA;border-color:#BA7517;color:#633806}
+.cell.promoted{background:#EEEDFE;border-color:#7F77DD;color:#3C3489}
+.cell.compacted{background:#E1F5EE;border-color:#1D9E75;color:#085041}
+.legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px}
+.legend-item{display:flex;align-items:center;gap:5px;font-size:12px;color:#5f5e5a}
+.collapsible{border:0.5px solid #d0cec5;border-radius:8px;margin-bottom:8px;overflow:hidden}
+.coll-header{padding:8px 12px;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;background:#fff;user-select:none}
+.coll-header:hover{background:#eeecea}
+.coll-chevron{font-size:14px;transition:transform 0.2s;color:#5f5e5a}
+.coll-body{padding:10px 12px;font-size:13px;line-height:1.7;color:#1a1a18;background:#fff;border-top:0.5px solid #d0cec5;display:none}
+.coll-body.open{display:block}
+.coll-body pre{background:#eeecea;border-radius:6px;padding:10px;font-size:12px;font-family:'Menlo','Consolas',monospace;overflow-x:auto;margin-top:6px;line-height:1.6}
+.phase-badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:4px;font-weight:500;margin-bottom:8px}
+.badge-blue{background:#E6F1FB;color:#0C447C}
+.badge-amber{background:#FAEEDA;color:#633806}
+.badge-teal{background:#E1F5EE;color:#085041}
+.badge-purple{background:#EEEDFE;color:#3C3489}
+.badge-gray{background:#F1EFE8;color:#444441}
+.note{font-size:12px;color:#5f5e5a;margin-top:6px;margin-bottom:4px;line-height:1.6}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>C# GC 垃圾回收过程可视化</h1>
+<div class="wrap">
+<div class="top-bar">
+  <span class="step-counter" id="stepCounter">步骤 1 / 10</span>
+  <div class="controls">
+    <button class="btn" onclick="go(0)">重置</button>
+    <button class="btn" id="btnPrev" onclick="go(cur-1)" disabled>上一步</button>
+    <button class="btn" id="btnNext" onclick="go(cur+1)">下一步</button>
+  </div>
+</div>
+
+<div class="scene" id="scene"></div>
+
+<div class="collapsible">
+  <div class="coll-header" onclick="togglePanel('Desc')">
+    <span>查看步骤说明</span>
+    <i class="ti ti-chevron-down coll-chevron" id="chevronDesc"></i>
+  </div>
+  <div class="coll-body" id="bodyDesc"></div>
+</div>
+
+<div class="collapsible">
+  <div class="coll-header" onclick="togglePanel('Code')">
+    <span>查看当前代码</span>
+    <i class="ti ti-chevron-down coll-chevron" id="chevronCode"></i>
+  </div>
+  <div class="coll-body" id="bodyCode"></div>
+</div>
+</div>
+</div>
+
+<script>
+var cur=0;
+
+function row(label,items,classes,note){
+  var h='<div class="heap-row"><span class="heap-label">'+label+'</span><div class="cells">';
+  for(var i=0;i<items.length;i++) h+='<div class="cell '+classes[i]+'">'+items[i]+'</div>';
+  h+='</div></div>';
+  if(note) h+='<p class="note" style="margin-left:62px">'+note+'</p>';
+  return h;
+}
+
+function legend(){
+  var items=[['live','存活'],['dead','垃圾'],['marked','已标记可达'],['promoted','晋升'],['compacted','压缩后'],['large','大对象(LOH)'],['empty','空闲']];
+  var h='<div class="legend">';
+  items.forEach(function(i){h+='<div class="legend-item"><div class="cell '+i[0]+'" style="width:12px;height:12px;border-radius:3px"></div><span>'+i[1]+'</span></div>';});
+  return h+'</div>';
+}
+
+function card2(t,b,bg,c){
+  return '<div style="background:'+bg+';border-radius:8px;padding:10px 12px;border:0.5px solid '+c+'40"><p style="font-size:12px;font-weight:500;color:'+c+';margin-bottom:4px">'+t+'</p><p style="font-size:12px;color:'+c+';line-height:1.6">'+b+'</p></div>';
+}
+
+var states=[
+  {badge:'badge-gray',phase:'初始状态',
+   html:function(){return '<p class="scene-title">托管堆 — 初始分配</p>'+
+     row('第 0 代',['A','B','C','D','E','F'],['live','live','live','live','live','live'],'新对象全部进入第 0 代')+
+     row('第 1 代',['-','-','-','-'],['empty','empty','empty','empty'])+
+     row('第 2 代',['-','-','-'],['empty','empty','empty'])+
+     row('LOH',[],[],'暂无大对象（≥85KB 才进入 LOH）')+legend();},
+   desc:'程序运行，新对象 A~F 分配到第 0 代。第 1、2 代为空。LOH（大型对象堆）存放 ≥85KB 的大对象，不压缩，回收后原地留碎片。',
+   code:'var a = new Order();     // 进入第 0 代\nvar b = new OrderItem(); // 进入第 0 代\nvar c = new Invoice();   // 进入第 0 代\nvar d = new Customer();  // 进入第 0 代\nvar e = new Product();   // 进入第 0 代\nvar f = new Report();    // 进入第 0 代'
+  },
+  {badge:'badge-gray',phase:'第 0 代满，触发 GC',
+   html:function(){return '<p class="scene-title">第 0 代满 → 触发回收，只处理第 0 代</p>'+
+     row('第 0 代',['A','B','C','D','E','F'],['live','dead','live','dead','live','dead'],'A、C、E 有引用（幸存）　B、D、F 无引用（垃圾）')+
+     row('第 1 代',['-','-','-','-'],['empty','empty','empty','empty'])+
+     row('第 2 代',['-','-','-'],['empty','empty','empty'])+legend();},
+   desc:'第 0 代满时 GC 自动触发，优先只处理第 0 代，不动第 1、2 代。这比压缩整个托管堆快得多——这也是三代机制的核心设计目的。',
+   code:'// GC 自动触发，无需手动调用\n// 根（Root）包括：静态字段、栈上局部变量、CPU 寄存器\n// 从根出发能找到的 = 幸存　找不到的 = 垃圾'
+  },
+  {badge:'badge-blue',phase:'标记阶段',
+   html:function(){return '<p class="scene-title">标记阶段 — 从根出发遍历引用链</p>'+
+     row('第 0 代',['A ✓','B ✗','C ✓','D ✗','E ✓','F ✗'],['marked','dead','marked','dead','marked','dead'],'✓ 可达（幸存）　✗ 不可达（垃圾）')+
+     row('第 1 代',['-','-','-','-'],['empty','empty','empty','empty'])+
+     row('第 2 代',['-','-','-'],['empty','empty','empty'])+legend();},
+   desc:'从根（静态字段、栈上局部变量、CPU 寄存器）出发，遍历引用链，能到达的标记为可达，不能到达的标记为垃圾。C# 用可达性分析而非引用计数，可处理循环引用。',
+   code:'// 循环引用也能被正确回收\nvar objA = new A();\nvar objB = new B();\nobjA.b = objB;\nobjB.a = objA;\nobjA = null;\nobjB = null;\n// 引用计数法：两者计数都是 1，无法回收\n// 可达性分析：从根找不到它们，判定为垃圾 ✓'
+  },
+  {badge:'badge-amber',phase:'重定位阶段',
+   html:function(){return '<p class="scene-title">重定位阶段 — 更新所有指向幸存对象的引用</p>'+
+     row('第 0 代',['A →','B ✗','C →','D ✗','E →','F ✗'],['marked','dead','marked','dead','marked','dead'],'压缩前先更新所有指向 A、C、E 的引用地址')+
+     '<p class="note" style="margin-left:0">更新范围：栈上的局部变量引用、堆中其他对象的引用字段、静态字段里的引用。移动后引用仍然有效，不会变成野指针。</p>'+legend();},
+   desc:'压缩前需要移动对象，GC 先把所有指向幸存对象的引用地址全部更新。这样移动后引用仍然指向正确位置。',
+   code:'// 重定位由 GC 内部完成，开发者无需关心\n// 但如需固定对象地址（如与非托管代码交互）\n// 可使用 fixed 关键字\nfixed (int* p = &value)\n{\n    // value 地址被固定，GC 不会在此期间移动它\n}'
+  },
+  {badge:'badge-teal',phase:'压缩阶段',
+   html:function(){return '<p class="scene-title">压缩阶段 — 回收死对象，幸存者紧凑排列</p>'+
+     row('第 0 代',['A','C','E','□','□','□'],['compacted','compacted','compacted','empty','empty','empty'],'压缩后末尾形成连续空闲内存')+
+     '<p class="note" style="margin-left:0">压缩前：A___C___E___　→　压缩后：ACE_________　新对象直接追加在末尾，不需要在碎片里找空位。</p>'+
+     row('第 1 代',['-','-','-','-'],['empty','empty','empty','empty'])+
+     row('第 2 代',['-','-','-'],['empty','empty','empty'])+legend();},
+   desc:'死对象空间被回收，幸存对象 A、C、E 向低地址端移动紧凑排列，末尾形成连续空闲内存。LOH 不参与压缩，移动大块内存代价太高。',
+   code:'// 压缩后新对象直接追加\nvar g = new NewObject(); // 追加到 E 之后\n\n// LOH 不压缩，用 ArrayPool 避免碎片\nint[] arr = ArrayPool<int>.Shared.Rent(100000);\ntry { /* 使用 */ }\nfinally { ArrayPool<int>.Shared.Return(arr); }'
+  },
+  {badge:'badge-purple',phase:'幸存者晋升到第 1 代',
+   html:function(){return '<p class="scene-title">幸存者晋升 — A、C、E 从第 0 代升级到第 1 代</p>'+
+     row('第 0 代',['□','□','□','□','□','□'],['empty','empty','empty','empty','empty','empty'],'第 0 代清空，等待新对象')+
+     row('第 1 代',['A','C','E','-'],['promoted','promoted','promoted','empty'],'A、C、E 晋升至第 1 代')+
+     row('第 2 代',['-','-','-'],['empty','empty','empty'])+legend();},
+   desc:'第 0 代 GC 后，幸存的 A、C、E 晋升到第 1 代。GC 不必每次都重检第 1、2 代，这提高了回收效率。晋升路径：第 0 代 → 第 1 代 → 第 2 代，不会跳代。',
+   code:'// 晋升由 GC 自动完成\n// 避免对象过早晋升到高代的方法：使用对象池\nvar pool = new ObjectPool<HeavyObject>(\n    () => new HeavyObject());\nvar obj = pool.Get();\ntry { /* 使用 obj */ }\nfinally { pool.Return(obj); }'
+  },
+  {badge:'badge-gray',phase:'第 1 代满，触发第 0 + 1 代回收',
+   html:function(){return '<p class="scene-title">第 1 代满 → 同时回收第 0 代 + 第 1 代</p>'+
+     row('第 0 代',['X','Y','Z','□','□','□'],['dead','live','dead','empty','empty','empty'],'X、Z 无引用（垃圾）　Y 有引用（幸存）')+
+     row('第 1 代',['A','C','E','W'],['promoted','dead','promoted','dead'],'第 1 代满：C、W 无引用被回收；A、E 幸存晋升第 2 代')+
+     row('第 2 代',['-','-','-'],['empty','empty','empty'])+
+     '<p class="note" style="margin-left:0">回收规则：不会单独回收第 1 代，前代满了才触发后代。第 1 代满 → 第 0 代 + 第 1 代一起回收。</p>'+legend();},
+   desc:'第 1 代满时，第 0 代和第 1 代同时被回收。第 1 代中 C 和 W 无引用被回收，A 和 E 幸存，将晋升至第 2 代。第 0 代中 Y 幸存晋升第 1 代，X、Z 被回收。',
+   code:'// 回收触发规则\n// 只触发第 0 代：第 0 代满\n// 触发第 0 + 1 代：第 1 代满\n// 触发第 0 + 1 + 2 代（完整GC）：第 2 代满\n\nGC.Collect(0); // 手动触发第 0 代（不推荐）\nGC.Collect(1); // 手动触发第 0 + 1 代\nGC.Collect(2); // 手动触发完整 GC'
+  },
+  {badge:'badge-purple',phase:'第 1 代回收后晋升',
+   html:function(){return '<p class="scene-title">第 1 代回收后 — A、E 晋升第 2 代，Y 晋升第 1 代</p>'+
+     row('第 0 代',['□','□','□','□','□','□'],['empty','empty','empty','empty','empty','empty'],'第 0 代清空')+
+     row('第 1 代',['Y','-','-','-'],['promoted','empty','empty','empty'],'Y 从第 0 代晋升')+
+     row('第 2 代',['A','E','-'],['promoted','promoted','empty'],'A、E 从第 1 代晋升，第 2 代开始有对象')+legend();},
+   desc:'第 1 代回收后：A 和 E 从第 1 代晋升到第 2 代；Y 从第 0 代晋升到第 1 代；第 0 代清空。第 2 代现在有了对象，随着程序继续运行，第 2 代终将填满。',
+   code:'// 对象进入第 2 代后，只有完整 GC 才能回收它\n// 常见导致对象进入第 2 代的情况：\n// - 静态集合持有对象引用\n// - 缓存对象\n// - 单例对象持有的子对象'
+  },
+  {badge:'badge-gray',phase:'第 2 代满，触发完整 GC',
+   html:function(){return '<p class="scene-title">第 2 代满 → 完整 GC，三代全部回收</p>'+
+     row('第 0 代',['P','Q','□','□','□','□'],['live','dead','empty','empty','empty','empty'],'P 幸存，Q 无引用')+
+     row('第 1 代',['Y','M','□','□'],['promoted','dead','empty','empty'],'Y 幸存，M 无引用')+
+     row('第 2 代',['A','E','N'],['compacted','dead','dead'],'第 2 代满：A 幸存，E、N 无引用被回收')+
+     row('LOH',['BigArr'],['large'],'≥85KB，不压缩，回收后原地留碎片')+
+     '<p class="note" style="margin-left:0">⚠️ 完整 GC 开销最大，三代同时处理。static 对象不参与 GC，与程序同生共死。</p>'+legend();},
+   desc:'第 2 代满时触发完整 GC，三代同时回收。E 在第 2 代中最终无引用被回收，A 继续幸存。这是开销最大的 GC，应尽量避免对象长期驻留第 2 代。',
+   code:'// 避免完整 GC 的建议\n// 1. 减少长生命周期对象\nstatic List<object> cache = new(); // ❌ 静态集合持续增长\n\n// 2. 用 ArrayPool 避免大对象碎片\nint[] arr = ArrayPool<int>.Shared.Rent(100000);\nArrayPool<int>.Shared.Return(arr);\n\n// 3. StringBuilder 代替字符串拼接\nvar sb = new StringBuilder();\nsb.Append("a").Append("b");\nstring s = sb.ToString();'
+  },
+  {badge:'badge-blue',phase:'CLR 的平衡机制',
+   html:function(){return '<p class="scene-title">CLR 在两个极端之间动态平衡</p>'+
+     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px">'+
+     card2('回收太少（延迟 GC）','内存持续增长<br>工作集过大<br>最终内存不足崩溃','#FCEBEB','#A32D2D')+
+     card2('回收太频繁','GC 自身消耗 CPU<br>程序频繁暂停卡顿<br>性能下降','#FCEBEB','#A32D2D')+
+     '</div>'+
+     '<div style="margin-top:12px;padding:10px;background:#fff;border:0.5px solid #d0cec5;border-radius:8px;font-size:13px;line-height:1.7">'+
+     '<span style="font-size:12px;font-weight:500">CLR 自适应机制</span><br>'+
+     '某代幸存率高 → 增大该代分配阈值 → 减少无效回收频率<br>'+
+     '内存压力大 → 降低阈值 → 提高回收频率'+
+     '</div>'+
+     '<p class="note">GC 只管托管堆（三代 + LOH）。栈上值类型由系统自动管理，语句块结束后自动释放。非托管资源需通过 IDisposable / using 手动释放。</p>';},
+   desc:'CLR 持续在"内存太大"和"GC 太频繁"之间动态调整。通过自适应阈值机制，当某代幸存率高时增大阈值减少回收次数；内存压力大时降低阈值加快回收。',
+   code:'// using = try/finally 语法糖\n// 保证非托管资源一定被释放\nusing (var conn = new SqlConnection(connStr))\n{\n    // 退出时自动调用 conn.Dispose()\n}\n\n// 等价写法：\nvar conn = new SqlConnection(connStr);\ntry { /* ... */ }\nfinally { conn.Dispose(); }'
+  }
+];
+
+function go(n){
+  if(n<0||n>=states.length) return;
+  cur=n;
+  var s=states[cur];
+  document.getElementById('stepCounter').textContent='步骤 '+(cur+1)+' / '+states.length;
+  document.getElementById('btnPrev').disabled=cur===0;
+  document.getElementById('btnNext').disabled=cur===states.length-1;
+  document.getElementById('scene').innerHTML='<span class="phase-badge '+s.badge+'">'+s.phase+'</span>'+s.html();
+  document.getElementById('bodyDesc').textContent=s.desc;
+  document.getElementById('bodyCode').innerHTML='<pre>'+s.code+'</pre>';
+}
+
+function togglePanel(id){
+  var body=document.getElementById('body'+id);
+  var chev=document.getElementById('chevron'+id);
+  var open=body.classList.contains('open');
+  body.classList.toggle('open',!open);
+  if(chev) chev.style.transform=open?'':'rotate(180deg)';
+}
+
+go(0);
+</script>
+</body>
+</html>
