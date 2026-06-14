@@ -169,6 +169,9 @@ Quaternion.LookRotation(面朝向量);
 Transform lookA;
 Quaternion q = Quaternion.LookRotation(lookA.position - transform.position);
 transform.rotation = q;
+
+//将一个向量朝另一个向量移动指定步长
+transform.rotation = Quaternion.RotateTowards(transform.rotation, target.rotation, step)
 ```
 
 ---

@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KMP 前缀表构建 — 跳跃回退演示</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --bg2: #f5f5f3;
+    --bg3: #efefec;
+    --text: #1a1a18;
+    --text2: #6b6b67;
+    --border: rgba(0,0,0,0.12);
+    --border2: rgba(0,0,0,0.25);
+    --radius: 8px;
+    --radius-lg: 12px;
+    --font-mono: 'Menlo', 'Consolas', 'Monaco', monospace;
+    --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --blue-bg: #E6F1FB; --blue-bd: #378ADD; --blue-tx: #0C447C;
+    --green-bg: #EAF3DE; --green-bd: #639922; --green-tx: #3B6D11;
+    --red-bg: #FCEBEB; --red-bd: #E24B4A; --red-tx: #A32D2D;
+    --purple-bg: #EEEDFE; --purple-bd: #7F77DD; --purple-tx: #3C3489;
+    --purple-fill: #534AB7; --purple-fill-tx: #EEEDFE;
+    --amber-bg: #FAEEDA; --amber-bd: #BA7517; --amber-tx: #633806;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1c1a; --bg2: #252523; --bg3: #2e2e2b;
+      --text: #e8e8e4; --text2: #8a8a85;
+      --border: rgba(255,255,255,0.1); --border2: rgba(255,255,255,0.22);
+      --blue-bg: #0c2540; --blue-bd: #378ADD; --blue-tx: #85B7EB;
+      --green-bg: #152808; --green-bd: #639922; --green-tx: #97C459;
+      --red-bg: #2c0f0f; --red-bd: #E24B4A; --red-tx: #F09595;
+      --purple-bg: #1e1a40; --purple-bd: #7F77DD; --purple-tx: #AFA9EC;
+      --purple-fill: #3C3489; --purple-fill-tx: #CECBF6;
+      --amber-bg: #2a1a04; --amber-bd: #BA7517; --amber-tx: #EF9F27;
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg3);
+    color: var(--text);
+    font-family: var(--font-sans);
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 2rem 1rem;
+  }
+  .card {
+    background: var(--bg);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 2rem;
+    width: 100%;
+    max-width: 640px;
+  }
+  h1 {
+    font-size: 17px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+  .subtitle {
+    font-size: 13px;
+    color: var(--text2);
+    margin-bottom: 1.5rem;
+    font-family: var(--font-mono);
+  }
+  .legend {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-bottom: 1.25rem;
+  }
+  .li {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text2);
+  }
+  .ld {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+  }
+  .slabel {
+    font-size: 12px;
+    color: var(--text2);
+    margin-bottom: 6px;
+    letter-spacing: 0.02em;
+  }
+  .row {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 3px;
+  }
+  .cell {
+    width: 48px;
+    height: 48px;
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 19px;
+    font-weight: 500;
+    font-family: var(--font-mono);
+    color: var(--text);
+    background: var(--bg);
+    transition: background .15s, border-color .15s, color .15s;
+  }
+  .cell.idx {
+    height: 22px;
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--text2);
+    border: none;
+    background: transparent;
+  }
+  .cell.ptr-row {
+    height: 20px;
+    font-size: 11px;
+    font-weight: 500;
+    border: none;
+    background: transparent;
+    color: var(--text2);
+  }
+  .cell.hi   { background: var(--blue-bg);   border-color: var(--blue-bd);   color: var(--blue-tx); }
+  .cell.hj   { background: var(--green-bg);  border-color: var(--green-bd);  color: var(--green-tx); }
+  .cell.mok  { background: var(--green-bg);  border-color: var(--green-bd);  color: var(--green-tx); }
+  .cell.nok  { background: var(--red-bg);    border-color: var(--red-bd);    color: var(--red-tx); }
+  .ncell {
+    width: 48px;
+    height: 38px;
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    font-weight: 500;
+    font-family: var(--font-mono);
+    color: var(--text2);
+    background: var(--bg2);
+    transition: background .15s, border-color .15s, color .15s;
+  }
+  .ncell.nf  { background: var(--purple-bg); border-color: var(--purple-bd); color: var(--purple-tx); }
+  .ncell.njf { background: var(--purple-fill); border-color: var(--purple-bd); color: var(--purple-fill-tx); }
+  .sbox {
+    margin: 1rem 0 0.75rem;
+    padding: 10px 14px;
+    border-radius: var(--radius);
+    border: 0.5px solid var(--border);
+    background: var(--bg2);
+    font-size: 14px;
+    color: var(--text);
+    min-height: 56px;
+    line-height: 1.65;
+  }
+  .sbox .sl {
+    font-size: 11px;
+    color: var(--text2);
+    margin-bottom: 4px;
+    letter-spacing: 0.03em;
+  }
+  .jump-badge {
+    display: inline-block;
+    background: var(--amber-bg);
+    color: var(--amber-tx);
+    border: 0.5px solid var(--amber-bd);
+    border-radius: var(--radius);
+    font-size: 12px;
+    padding: 2px 8px;
+    margin-left: 8px;
+    font-family: var(--font-sans);
+    vertical-align: middle;
+  }
+  .ctrls {
+    display: flex;
+    gap: 8px;
+    margin-top: 0.75rem;
+    flex-wrap: wrap;
+  }
+  button {
+    font-size: 13px;
+    padding: 6px 16px;
+    border: 0.5px solid var(--border2);
+    border-radius: var(--radius);
+    background: transparent;
+    color: var(--text);
+    cursor: pointer;
+    font-family: var(--font-sans);
+    transition: background .1s;
+  }
+  button:hover { background: var(--bg2); }
+  button:active { transform: scale(0.98); }
+  button:disabled { opacity: 0.35; cursor: default; }
+  .stc {
+    font-size: 12px;
+    color: var(--text2);
+    margin-top: 8px;
+  }
+  .divider {
+    border: none;
+    border-top: 0.5px solid var(--border);
+    margin: 1.5rem 0;
+  }
+  .note {
+    font-size: 13px;
+    color: var(--text2);
+    line-height: 1.7;
+  }
+  .note strong { font-weight: 500; color: var(--text); }
+  .note code {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    background: var(--bg2);
+    padding: 1px 5px;
+    border-radius: 4px;
+    border: 0.5px solid var(--border);
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>KMP 前缀表构建 — 跳跃回退演示</h1>
+  <div class="subtitle">needle = "aabaabaaf"</div>
+
+  <div class="legend">
+    <div class="li"><div class="ld" style="background:#378ADD"></div>fast（i）</div>
+    <div class="li"><div class="ld" style="background:#639922"></div>slow（j）</div>
+    <div class="li"><div class="ld" style="background:#7F77DD"></div>刚写入 next</div>
+    <div class="li"><div class="ld" style="background:#BA7517"></div>跳跃回退</div>
+  </div>
+
+  <div class="slabel">needle</div>
+  <div class="row" id="pr"></div>
+  <div class="row" id="cr"></div>
+  <div class="row" id="ir"></div>
+
+  <div class="slabel" style="margin-top:14px">next 数组</div>
+  <div class="row" id="nr"></div>
+
+  <div class="sbox">
+    <div class="sl">当前步骤</div>
+    <div id="st"></div>
+  </div>
+
+  <div class="ctrls">
+    <button id="bp" onclick="step(-1)" disabled>← 上一步</button>
+    <button id="bn" onclick="step(1)">下一步 →</button>
+    <button onclick="reset()">重置</button>
+  </div>
+  <div class="stc" id="sc"></div>
+
+  <hr class="divider">
+  <div class="note">
+    <strong>为什么用 <code>slow = next[slow-1]</code> 而不是 <code>--slow</code>？</strong><br>
+    回退不是每次退一格，而是直接跳到"已匹配前缀的上一个最长相等前后缀位置"。
+    步骤 9-11 展示了 slow 从 <strong>5 → 2 → 1 → 0</strong> 的三次跳跃，
+    而逐格退需要走 5 步。<code>next[slow-1]</code> 保证每次跳到最优回退点，
+    是 KMP 时间复杂度 O(n) 的关键。
+  </div>
+</div>
+
+<script>
+const nd = ['a','a','b','a','a','b','a','a','f'];
+const n = nd.length;
+const fn = [0,1,0,1,2,3,4,5,0];
+
+const steps = [
+  {f:1,s:0,cmp:true, res:null, nw:null,jump:false,msg:'初始：slow=0，fast 从 1 开始'},
+  {f:1,s:0,cmp:true, res:true, nw:1,   jump:false,msg:'nd[1]="a" == nd[0]="a"，相等 → next[1]=++slow=1，fast++'},
+  {f:2,s:1,cmp:true, res:false,nw:1,   jump:false,msg:'nd[2]="b" != nd[1]="a"，不等 → 回退 slow = next[slow-1] = next[0] = 0'},
+  {f:2,s:0,cmp:true, res:false,nw:2,   jump:false,msg:'nd[2]="b" != nd[0]="a"，slow=0 仍不等 → next[2]=0，fast++'},
+  {f:3,s:0,cmp:true, res:true, nw:3,   jump:false,msg:'nd[3]="a" == nd[0]="a"，相等 → next[3]=++slow=1，fast++'},
+  {f:4,s:1,cmp:true, res:true, nw:4,   jump:false,msg:'nd[4]="a" == nd[1]="a"，相等 → next[4]=++slow=2，fast++'},
+  {f:5,s:2,cmp:true, res:true, nw:5,   jump:false,msg:'nd[5]="b" == nd[2]="b"，相等 → next[5]=++slow=3，fast++'},
+  {f:6,s:3,cmp:true, res:true, nw:6,   jump:false,msg:'nd[6]="a" == nd[3]="a"，相等 → next[6]=++slow=4，fast++'},
+  {f:7,s:4,cmp:true, res:true, nw:7,   jump:false,msg:'nd[7]="a" == nd[4]="a"，相等 → next[7]=++slow=5，fast++'},
+  {f:8,s:5,cmp:true, res:false,nw:7,   jump:true, msg:'nd[8]="f" != nd[5]="b"，不等 → 跳跃回退！slow = next[slow-1] = next[4] = 2'},
+  {f:8,s:2,cmp:true, res:false,nw:7,   jump:true, msg:'nd[8]="f" != nd[2]="b"，仍不等 → 再次跳跃！slow = next[slow-1] = next[1] = 1'},
+  {f:8,s:1,cmp:true, res:false,nw:7,   jump:true, msg:'nd[8]="f" != nd[1]="a"，仍不等 → 再次跳跃！slow = next[slow-1] = next[0] = 0'},
+  {f:8,s:0,cmp:true, res:false,nw:8,   jump:false,msg:'nd[8]="f" != nd[0]="a"，slow=0 仍不等 → next[8]=0，fast++'},
+  {f:9,s:0,cmp:false,res:null, nw:8,   jump:false,msg:'fast=9=Length，构建完成 ✓  next = [0,1,0,1,2,3,4,5,0]'},
+];
+
+let cur = 0;
+
+function render() {
+  const s = steps[cur];
+  const pv = steps[cur > 0 ? cur-1 : 0];
+
+  const pr = document.getElementById('pr');
+  const cr = document.getElementById('cr');
+  const ir = document.getElementById('ir');
+  const nr = document.getElementById('nr');
+  pr.innerHTML=''; cr.innerHTML=''; ir.innerHTML=''; nr.innerHTML='';
+
+  for (let k=0; k<n; k++) {
+    const p = document.createElement('div');
+    p.className = 'cell ptr-row';
+    let lb = [];
+    if (k===s.f && s.f<n) lb.push('<span style="color:#378ADD">fast</span>');
+    if (k===s.s) lb.push('<span style="color:#639922">slow</span>');
+    p.innerHTML = lb.join(' ');
+    pr.appendChild(p);
+
+    const c = document.createElement('div');
+    c.className = 'cell';
+    c.textContent = nd[k];
+    if (s.cmp && s.f<n) {
+      if (k===s.f && k===s.s) c.classList.add('hi');
+      else if (k===s.f) {
+        if (s.res===true) c.classList.add('mok');
+        else if (s.res===false) c.classList.add('nok');
+        else c.classList.add('hi');
+      } else if (k===s.s) {
+        if (s.res===true) c.classList.add('mok');
+        else if (s.res===false) c.classList.add('nok');
+        else c.classList.add('hj');
+      }
+    }
+    cr.appendChild(c);
+
+    const ix = document.createElement('div');
+    ix.className = 'cell idx';
+    ix.textContent = k;
+    ir.appendChild(ix);
+  }
+
+  for (let k=0; k<n; k++) {
+    const nc = document.createElement('div');
+    nc.className = 'ncell';
+    let val = '–';
+    if (s.nw!==null && k<s.nw) {
+      nc.classList.add('nf');
+      val = fn[k];
+    }
+    if (s.nw!==null && k===s.nw-1 && s.res!==null) {
+      const pw = pv.nw;
+      if (pw===null || k>=pw) nc.classList.add('njf');
+      val = fn[k];
+    }
+    nc.textContent = val;
+    nr.appendChild(nc);
+  }
+
+  const badge = s.jump ? '<span class="jump-badge">跳跃回退</span>' : '';
+  document.getElementById('st').innerHTML = s.msg + badge;
+  document.getElementById('sc').textContent = `步骤 ${cur} / ${steps.length-1}`;
+  document.getElementById('bp').disabled = cur===0;
+  document.getElementById('bn').disabled = cur===steps.length-1;
+}
+
+function step(d) { cur = Math.max(0, Math.min(steps.length-1, cur+d)); render(); }
+function reset() { cur=0; render(); }
+
+render();
+</script>
+</body>
+</html>

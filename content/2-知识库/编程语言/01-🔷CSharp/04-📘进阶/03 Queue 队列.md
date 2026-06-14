@@ -37,6 +37,7 @@ object first = queue.Dequeue(); // 取出队头并移除
 
 // 查
 object peek = queue.Peek(); // 查看队头，不移除
+object last = queue.Last(); // 取出队尾，不移除
 queue.Contains(对象); // 返回 bool
 
 // 改

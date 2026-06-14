@@ -42,6 +42,16 @@ string result = string.Format("{0}{1}...", 拼接内容, 拼接内容);
 
 ---
 
+## 用指定分隔符拼接字符串 Join
+
+```csharp
+string[] strs = {"1", "2", "3"};
+string s = String.Join(" ", strs)
+Console.WriteLine(s);//"1 2 3"
+```
+
+---
+
 ## 正向查找字符位置 IndexOf
 
 >从正向开始查找，返回第一个匹配字符的索引值
@@ -103,6 +113,18 @@ s.Substring(开始位置, 指定个数); // 截取指定个数字
 string parts = "123"
 string[] parts = s.Split(",");
 //{ "1,","2,","3," }
+
+s.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+//这个重载可以剔除掉分割后的指定字符
+```
+
+---
+
+## 去掉首尾空格 Trim
+
+```csharp
+string s = "              2345              ";
+Console.WriteLine(s.Trim());//"2345"
 ```
 
 ---

@@ -41,8 +41,6 @@ stack.Contains(对象); // 返回 bool
 
 // 改（栈无法改变其中的元素，只能压和弹）
 stack.Clear(); // 清空
-
-
 ```
 
 ---

@@ -280,6 +280,7 @@ print(info.str);
 
 //元组的解构赋值
 //相当于把多返回值元组拆分到不同的变量中
+
 (string myStr, int myInt, float myFloat) = GetInfo();//方法一
 
 int myInt;
@@ -289,7 +290,8 @@ float myFloat;
 print(myStr);
 print(myInt);
 print(myFloat);
-
+//注意：元组可以直接交换数组中的两个值不用申明临时变量
+(s[left], s[right]) = (s[right], s[left]);
 
 //丢弃参数
 //利用传入 下划线_ 达到丢弃该参数不使用的作用

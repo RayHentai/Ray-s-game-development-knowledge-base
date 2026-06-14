@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<meta charset="UTF-8">
+<title>圆柱体顶点生成可视化</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #f5f4f0; font-family: system-ui, sans-serif; display: flex; justify-content: center; padding: 32px 16px; }
+  .card { background: #fff; border-radius: 12px; border: 0.5px solid rgba(100,100,95,0.2); padding: 24px; max-width: 720px; width: 100%; }
+  h2 { font-size: 16px; font-weight: 500; color: #3d3d3a; margin-bottom: 4px; }
+  .sub { font-size: 13px; color: #a0a099; margin-bottom: 16px; }
+  canvas { width: 100%; display: block; }
+  .ctrl { display: flex; align-items: center; gap: 16px; padding: 12px 0 0; flex-wrap: wrap; font-size: 13px; color: #888780; }
+  .ctrl label { display: flex; align-items: center; gap: 8px; }
+  input[type=range] { accent-color: #EF9F27; }
+  .val { font-weight: 500; color: #3d3d3a; min-width: 14px; }
+  #info { font-size: 12px; color: #888780; padding: 8px 0 0; min-height: 18px; line-height: 1.6; }
+  #info b { color: #3d3d3a; }
+  .legend { display: flex; gap: 20px; padding: 10px 0 0; font-size: 12px; color: #888780; flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; }
+</style>
+
+<div class="card">
+  <h2>圆柱体顶点生成原理</h2>
+  <p class="sub">外层循环 x 决定截面角度，内层循环 z 沿轴延伸——拖动滑块逐步观察</p>
+  <canvas id="c" width="672" height="400"></canvas>
+  <div class="ctrl">
+    <label>外层 x
+      <input type="range" id="sx" min="0" max="8" value="1" step="1" style="width:140px">
+      <span class="val" id="sx-out">1</span>
+    </label>
+    <label style="margin-left:auto">countX
+      <input type="range" id="cx" min="4" max="12" value="8" step="1" style="width:90px">
+      <span class="val" id="cx-out">8</span>
+    </label>
+    <label>countZ
+      <input type="range" id="cz" min="1" max="6" value="3" step="1" style="width:80px">
+      <span class="val" id="cz-out">3</span>
+    </label>
+  </div>
+  <div class="legend">
+    <div class="legend-item"><div class="dot" style="background:#EF9F27"></div>当前外层 x 正在生成的列</div>
+    <div class="legend-item"><div class="dot" style="background:#3B8BD4"></div>已生成完毕</div>
+    <div class="legend-item"><div class="dot" style="background:#d3d1c7"></div>尚未生成</div>
+  </div>
+  <div id="info"></div>
+</div>
+
+<script>
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const W = 672, H = 400;
+canvas.width = W; canvas.height = H;
+
+const OCX = 168, OCY = 210;
+const R = 115;
+const ZSX = 270, ZSY = -60;
+
+function proj(angleRad, zi, countZ) {
+  const t = zi / countZ;
+  return [OCX + Math.cos(angleRad) * R + t * ZSX,
+          OCY - Math.sin(angleRad) * R + t * ZSY];
+}
+
+function draw() {
+  const countX = parseInt(document.getElementById('cx').value);
+  const countZ = parseInt(document.getElementById('cz').value);
+  const sxEl   = document.getElementById('sx');
+  sxEl.max = countX;
+  const curX = Math.min(parseInt(sxEl.value), countX);
+  document.getElementById('cx-out').textContent = countX;
+  document.getElementById('cz-out').textContent = countZ;
+  document.getElementById('sx-out').textContent = curX;
+
+  ctx.clearRect(0, 0, W, H);
+  const ang = xi => 2 * Math.PI * xi / countX;
+
+  // ── 坐标轴 ──
+  ctx.strokeStyle = 'rgba(80,80,75,0.22)'; ctx.lineWidth = 1; ctx.setLineDash([]);
+  ctx.beginPath(); ctx.moveTo(OCX - R - 18, OCY); ctx.lineTo(OCX + R + 18, OCY); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(OCX, OCY + R + 18); ctx.lineTo(OCX, OCY - R - 18); ctx.stroke();
+  ctx.fillStyle = '#a0a099'; ctx.font = '13px system-ui,sans-serif';
+  ctx.textAlign = 'left';   ctx.fillText('x', OCX + R + 20, OCY + 4);
+  ctx.textAlign = 'center'; ctx.fillText('y', OCX, OCY - R - 22);
+
+  // ── 截面正圆 ──
+  ctx.strokeStyle = 'rgba(80,80,75,0.22)'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.arc(OCX, OCY, R, 0, Math.PI * 2); ctx.stroke();
+
+  // ── 背景未生成顶点 ──
+  for (let xi = curX + 1; xi <= countX; xi++) {
+    for (let zi = 0; zi <= countZ; zi++) {
+      const [px, py] = proj(ang(xi), zi, countZ);
+      ctx.beginPath(); ctx.arc(px, py, 2.5, 0, Math.PI * 2);
+      ctx.fillStyle = '#d3d1c7'; ctx.fill();
+    }
+  }
+
+  // 右截面弧虚线
+  ctx.strokeStyle = 'rgba(100,100,95,0.13)'; ctx.lineWidth = 1; ctx.setLineDash([3, 4]);
+  ctx.beginPath();
+  for (let xi = curX; xi <= countX; xi++) {
+    const [px, py] = proj(ang(xi), countZ, countZ);
+    xi === curX ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+  }
+  ctx.stroke(); ctx.setLineDash([]);
+
+  // ── 已完成面片 ──
+  for (let xi = curX - 1; xi >= 0; xi--) {
+    for (let zi = 0; zi < countZ; zi++) {
+      const [ax, ay] = proj(ang(xi),   zi,   countZ);
+      const [bx, by] = proj(ang(xi+1), zi,   countZ);
+      const [cx2,cy2]= proj(ang(xi+1), zi+1, countZ);
+      const [dx, dy] = proj(ang(xi),   zi+1, countZ);
+      ctx.fillStyle = 'rgba(59,139,212,0.10)';
+      ctx.beginPath(); ctx.moveTo(ax,ay); ctx.lineTo(bx,by); ctx.lineTo(cx2,cy2); ctx.lineTo(dx,dy);
+      ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = 'rgba(59,139,212,0.6)'; ctx.lineWidth = 0.8; ctx.stroke();
+    }
+  }
+
+  // 已完成截面弧
+  if (curX > 0) {
+    ctx.strokeStyle = '#3B8BD4'; ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    for (let xi = 0; xi <= curX; xi++) {
+      const [px, py] = proj(ang(xi), 0, countZ);
+      xi === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+  }
+
+  // ── 当前列面片高亮 ──
+  if (curX < countX) {
+    for (let zi = 0; zi < countZ; zi++) {
+      const [ax, ay] = proj(ang(curX),   zi,   countZ);
+      const [bx, by] = proj(ang(curX+1), zi,   countZ);
+      const [cx2,cy2]= proj(ang(curX+1), zi+1, countZ);
+      const [dx, dy] = proj(ang(curX),   zi+1, countZ);
+      ctx.fillStyle = 'rgba(239,159,39,0.18)';
+      ctx.beginPath(); ctx.moveTo(ax,ay); ctx.lineTo(bx,by); ctx.lineTo(cx2,cy2); ctx.lineTo(dx,dy);
+      ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = '#EF9F27'; ctx.lineWidth = 1.2; ctx.stroke();
+    }
+  }
+
+  // ── 当前列顶点 + z连线 ──
+  for (let zi = 0; zi <= countZ; zi++) {
+    const [px, py] = proj(ang(curX), zi, countZ);
+    ctx.beginPath(); ctx.arc(px, py, 5.5, 0, Math.PI * 2);
+    ctx.fillStyle = '#EF9F27'; ctx.fill();
+    if (zi > 0) {
+      const [ppx, ppy] = proj(ang(curX), zi-1, countZ);
+      ctx.strokeStyle = '#EF9F27'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(ppx, ppy); ctx.lineTo(px, py); ctx.stroke();
+    }
+  }
+
+  // ── 已完成顶点 ──
+  for (let xi = 0; xi < curX; xi++) {
+    for (let zi = 0; zi <= countZ; zi++) {
+      const [px, py] = proj(ang(xi), zi, countZ);
+      ctx.beginPath(); ctx.arc(px, py, 4, 0, Math.PI * 2);
+      ctx.fillStyle = '#3B8BD4'; ctx.fill();
+    }
+  }
+
+  // ══ 截面辅助线标注 ══
+  const rad = ang(curX);
+  const cpx = OCX + Math.cos(rad) * R;
+  const cpy = OCY - Math.sin(rad) * R;
+  const footX = cpx, footY = OCY;
+
+  // 邻边虚线
+  ctx.strokeStyle = '#EF9F27'; ctx.lineWidth = 1.2; ctx.setLineDash([4, 4]);
+  ctx.beginPath(); ctx.moveTo(OCX, OCY); ctx.lineTo(footX, footY); ctx.stroke();
+  // 对边虚线
+  ctx.beginPath(); ctx.moveTo(footX, footY); ctx.lineTo(cpx, cpy); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // 半径实线
+  ctx.strokeStyle = '#EF9F27'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(OCX, OCY); ctx.lineTo(cpx, cpy); ctx.stroke();
+
+  // 直角符号
+  if (Math.abs(Math.sin(rad)) > 0.05 && Math.abs(Math.cos(rad)) > 0.05) {
+    const s = 9, sx = Math.sign(Math.cos(rad)), sy = Math.sign(Math.sin(rad));
+    ctx.strokeStyle = '#EF9F27'; ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(footX, footY - sy * s);
+    ctx.lineTo(footX - sx * s, footY - sy * s);
+    ctx.lineTo(footX - sx * s, footY);
+    ctx.stroke();
+  }
+
+  // α 弧
+  const arcR = 26;
+  ctx.strokeStyle = '#EF9F27'; ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  ctx.arc(OCX, OCY, arcR, -rad, 0, rad >= 0);
+  ctx.stroke();
+
+  // α 标签
+  const midA = rad / 2;
+  ctx.fillStyle = '#EF9F27';
+  ctx.font = 'italic 14px Georgia, serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('α', OCX + (arcR + 16) * Math.cos(midA), OCY - (arcR + 16) * Math.sin(midA) + 4);
+
+  // 邻边标签
+  ctx.font = '12px system-ui, sans-serif';
+  ctx.fillStyle = '#EF9F27';
+  ctx.textAlign = 'center';
+  ctx.fillText('b = cos(α)·r', (OCX + footX) / 2, OCY + (Math.sin(rad) >= 0 ? 16 : -8));
+
+  // 对边标签
+  ctx.textAlign = Math.cos(rad) >= 0 ? 'left' : 'right';
+  ctx.fillText('a = sin(α)·r', cpx + (Math.cos(rad) >= 0 ? 10 : -10), (OCY + cpy) / 2 + 4);
+
+  // 坐标标注
+  const cosV = Math.cos(rad).toFixed(2), sinV = Math.sin(rad).toFixed(2);
+  ctx.fillStyle = '#3d3d3a';
+  ctx.font = '11px monospace';
+  ctx.textAlign = Math.cos(rad) >= 0 ? 'left' : 'right';
+  ctx.fillText(`(${cosV}r, ${sinV}r)`,
+    cpx + (Math.cos(rad) >= 0 ? 12 : -12),
+    cpy + (Math.sin(rad) >= 0 ? -12 : 16));
+
+  // z轴提示
+  const [z0x, z0y] = proj(ang(0), 0, countZ);
+  const [z1x, z1y] = proj(ang(0), countZ, countZ);
+  ctx.strokeStyle = '#a0a099'; ctx.lineWidth = 1; ctx.setLineDash([2, 3]);
+  ctx.beginPath(); ctx.moveTo(z0x, z0y); ctx.lineTo(z1x, z1y); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = '#a0a099'; ctx.font = '12px system-ui,sans-serif';
+  ctx.textAlign = 'left'; ctx.fillText('z →', z1x + 6, z1y + 4);
+
+  // info
+  const idx = curX * (countZ + 1);
+  document.getElementById('info').innerHTML =
+    `α = 2π × ${curX}/${countX} = <b>${rad.toFixed(3)} rad</b> &nbsp;|&nbsp;` +
+    `b = cos(α)·r = <b>${cosV}·r</b> &nbsp;|&nbsp;` +
+    `a = sin(α)·r = <b>${sinV}·r</b> &nbsp;|&nbsp;` +
+    `内层起始 index = <b>${idx}</b>，内层生成 <b>${countZ + 1}</b> 个顶点`;
+}
+
+['cx', 'cz', 'sx'].forEach(id => document.getElementById(id).addEventListener('input', draw));
+draw();
+</script>
