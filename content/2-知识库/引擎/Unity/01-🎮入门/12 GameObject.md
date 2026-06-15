@@ -22,6 +22,9 @@ GameObject.isStatic // 是否静态
 GameObject.layer // 层级（0~31）
 GameObject.tag // 标签
 GameObject.transform // Transform 组件
+
+//C# 里，Unity 的 GameObject 重载了隐式转换——
+//把一个 GameObject 放在条件判断里，它等价于判断这个对象是否存在且未被销毁
 ```
 
 ---
