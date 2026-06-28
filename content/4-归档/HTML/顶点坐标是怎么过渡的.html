@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>地形首尾衔接插值过渡</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #f5f4f0;
+    --card: #ffffff;
+    --border: rgba(100,100,95,0.2);
+    --text: #3d3d3a;
+    --muted: #a0a099;
+    --radius: 12px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1e1e1c;
+      --card: #2a2a28;
+      --border: rgba(180,178,169,0.15);
+      --text: #c2c0b6;
+      --muted: #6b6a64;
+    }
+  }
+  body { background: var(--bg); font-family: system-ui, sans-serif; display: flex; justify-content: center; padding: 32px 16px; }
+  .card { background: var(--card); border-radius: var(--radius); border: 0.5px solid var(--border); padding: 24px; max-width: 720px; width: 100%; }
+  h2 { font-size: 16px; font-weight: 500; color: var(--text); margin-bottom: 4px; }
+  .sub { font-size: 13px; color: var(--muted); margin-bottom: 16px; }
+  canvas { width: 100%; display: block; }
+  .ctrl { display: flex; align-items: center; gap: 16px; padding: 12px 0 0; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
+  .ctrl label { display: flex; align-items: center; gap: 8px; }
+  input[type=range] { accent-color: #EF9F27; }
+  .val { font-weight: 500; color: var(--text); min-width: 14px; }
+  .legend { display: flex; gap: 20px; padding: 10px 0 0; font-size: 12px; color: var(--muted); flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .leg-line { width: 24px; height: 2px; }
+  .leg-dash { width: 24px; height: 0; border-top: 2px dashed; }
+  #info { font-size: 12px; color: var(--muted); padding: 8px 0 0; min-height: 18px; line-height: 1.7; }
+  #info b { color: var(--text); }
+</style>
+</head>
+<body>
+<div class="card">
+  <h2>地形首尾衔接 — 单截面插值过渡过程</h2>
+  <p class="sub">拖动 z 滑块，逐步观察每次执行 Vector3.Lerp(beginPoint, noiseVertex, perlinPercentage) 时截面的变化</p>
+  <canvas id="c" width="672" height="360"></canvas>
+  <div class="ctrl">
+    <label>当前 z
+      <input type="range" id="sz" min="0" max="6" value="0" step="1" style="width:180px">
+      <span class="val" id="sz-out">0</span>
+    </label>
+    <label style="margin-left:auto">transitionLength
+      <input type="range" id="tl" min="3" max="8" value="6" step="1" style="width:100px">
+      <span class="val" id="tl-out">6</span>
+    </label>
+  </div>
+  <div class="legend">
+    <div class="legend-item"><div class="leg-dash" style="border-color:#185FA5"></div>beginPoint（上一块末尾截面）</div>
+    <div class="legend-item"><div class="leg-line" style="background:#EF9F27"></div>当前插值截面 vertices[index]</div>
+    <div class="legend-item"><div class="leg-dash" style="border-color:#888780"></div>噪声目标截面</div>
+  </div>
+  <div id="info"></div>
+</div>
+
+<script>
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const W = 672, H = 360;
+canvas.width = W; canvas.height = H;
+
+const countX = 16;
+const R = 120;
+const OCX = W / 2, OCY = H / 2;
+
+function fade(t){return t*t*t*(t*(t*6-15)+10);}
+function lerpF(a,b,t){return a+t*(b-a);}
+function grad(h,x,y){const u=h<2?x:y,v=h<2?y:x;return((h&1)?-u:u)+((h&2)?-v:v);}
+const perm=(()=>{
+  const p=[151,160,137,91,90,15,131,13,201,95,96,53,194,233,7,225,140,36,103,30,69,142,8,99,37,240,21,10,23,190,6,148,247,120,234,75,0,26,197,62,94,252,219,203,117,35,11,32,57,177,33,88,237,149,56,87,174,20,125,136,171,168,68,175,74,165,71,134,139,48,27,166,77,146,158,231,83,111,229,122,60,211,133,230,220,105,92,41,55,46,245,40,244,102,143,54,65,25,63,161,1,216,80,73,209,76,132,187,208,89,18,169,200,196,135,130,116,188,159,86,164,100,109,198,173,186,3,64,52,217,226,250,124,123,5,202,38,147,118,126,255,82,85,212,207,206,59,227,47,16,58,17,182,189,28,42,223,183,170,213,119,248,152,2,44,154,163,70,221,153,101,155,167,43,172,9,129,22,39,253,19,98,108,110,79,113,224,232,178,185,112,104,218,246,97,228,251,34,242,193,238,210,144,12,191,179,162,241,81,51,145,235,249,14,239,107,49,192,214,31,181,199,106,157,184,84,204,176,115,121,50,45,127,4,150,254,138,236,205,93,222,114,67,29,24,72,243,141,128,195,78,66,215,61,156,180];
+  const t=new Uint8Array(512);
+  for(let i=0;i<512;i++) t[i]=p[i&255];
+  return t;
+})();
+function perlin(x,y){
+  const X=Math.floor(x)&255,Y=Math.floor(y)&255;
+  const xf=x-Math.floor(x),yf=y-Math.floor(y);
+  const u=fade(xf),v=fade(yf);
+  const aa=perm[perm[X]+Y],ab=perm[perm[X]+Y+1];
+  const ba=perm[perm[X+1]+Y],bb=perm[perm[X+1]+Y+1];
+  return lerpF(lerpF(grad(aa,xf,yf),grad(ba,xf-1,yf),u),
+               lerpF(grad(ab,xf,yf-1),grad(bb,xf-1,yf-1),u),v)*0.5+0.5;
+}
+
+function getCircle(offset, z){
+  const pts=[];
+  for(let x=0;x<=countX;x++){
+    const rad=2*Math.PI*x/countX;
+    const bx=Math.cos(rad)*R, by=Math.sin(rad)*R;
+    const n=perlin(bx*0.08+offset, z*0.12+offset)*0.55+0.25;
+    pts.push([bx*n, by*n]);
+  }
+  return pts;
+}
+
+function drawRing(pts, color, alpha, dash){
+  ctx.save();
+  ctx.globalAlpha=alpha;
+  ctx.strokeStyle=color;
+  ctx.lineWidth=1.8;
+  if(dash) ctx.setLineDash(dash);
+  ctx.beginPath();
+  for(let i=0;i<pts.length;i++){
+    const [px,py]=pts[i];
+    i===0?ctx.moveTo(OCX+px,OCY-py):ctx.lineTo(OCX+px,OCY-py);
+  }
+  ctx.closePath(); ctx.stroke();
+  ctx.restore();
+}
+
+function fillRing(pts, color, alpha){
+  ctx.save();
+  ctx.globalAlpha=alpha;
+  ctx.fillStyle=color;
+  ctx.beginPath();
+  for(let i=0;i<pts.length;i++){
+    const [px,py]=pts[i];
+    i===0?ctx.moveTo(OCX+px,OCY-py):ctx.lineTo(OCX+px,OCY-py);
+  }
+  ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
+
+function draw(){
+  const curZ     = parseInt(document.getElementById('sz').value);
+  const transLen = parseInt(document.getElementById('tl').value);
+  document.getElementById('sz').max = transLen;
+  const clampedZ = Math.min(curZ, transLen);
+  document.getElementById('sz-out').textContent = clampedZ;
+  document.getElementById('tl-out').textContent = transLen;
+
+  ctx.clearRect(0,0,W,H);
+
+  const isDark = window.matchMedia('(prefers-color-scheme:dark)').matches;
+  const blue   = isDark ? '#3B8BD4' : '#185FA5';
+  const amber  = '#EF9F27';
+  const gray   = isDark ? 'rgba(180,178,169,0.55)' : 'rgba(80,80,75,0.45)';
+  const refCol = isDark ? 'rgba(180,178,169,0.18)' : 'rgba(80,80,75,0.15)';
+
+  const beginPts  = getCircle(2.5, 0);
+  const noisePts  = getCircle(7.1, clampedZ);
+  const t = clampedZ >= transLen ? 1 : clampedZ * (1 / transLen);
+  const curPts = noisePts.map(([nx,ny],i)=>{
+    const [bx,by] = beginPts[i];
+    return [lerpF(bx,nx,t), lerpF(by,ny,t)];
+  });
+
+  // 参考正圆
+  ctx.strokeStyle=refCol; ctx.lineWidth=0.5; ctx.setLineDash([3,4]);
+  ctx.beginPath(); ctx.arc(OCX,OCY,R,0,Math.PI*2); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // beginPoint 截面（蓝色虚线）
+  drawRing(beginPts, blue, 0.55, [5,5]);
+
+  // 噪声目标截面（灰色虚线）
+  drawRing(noisePts, gray, 0.8, [2,3]);
+
+  // 当前插值截面填充 + 实线
+  fillRing(curPts, amber, 0.12);
+  drawRing(curPts, amber, 1.0, null);
+
+  // 每个顶点的移动箭头
+  for(let x=0;x<countX;x++){
+    const [bx,by]  = beginPts[x];
+    const [cx2,cy2]= curPts[x];
+    const [nx,ny]  = noisePts[x];
+    // 全程路径（灰色）
+    ctx.globalAlpha=0.2;
+    ctx.strokeStyle=isDark?'#c2c0b6':'#3d3d3a';
+    ctx.lineWidth=0.7;
+    ctx.beginPath(); ctx.moveTo(OCX+bx,OCY-by); ctx.lineTo(OCX+nx,OCY-ny); ctx.stroke();
+    ctx.globalAlpha=1;
+    // 已走路径（橙色）
+    if(t>0 && t<1){
+      ctx.strokeStyle=amber; ctx.lineWidth=1.2;
+      ctx.beginPath(); ctx.moveTo(OCX+bx,OCY-by); ctx.lineTo(OCX+cx2,OCY-cy2); ctx.stroke();
+    }
+    // 当前顶点
+    ctx.beginPath(); ctx.arc(OCX+cx2,OCY-cy2,3.5,0,Math.PI*2);
+    ctx.fillStyle=amber; ctx.fill();
+  }
+
+  const pct=(t*100).toFixed(0);
+  document.getElementById('info').innerHTML =
+    `z = ${clampedZ} &nbsp;|&nbsp; perlinPercentage = ${clampedZ}×(1/${transLen}) = <b>${t.toFixed(3)}</b> &nbsp;|&nbsp; ` +
+    `Lerp(beginPoint, noiseVertex, <b>${t.toFixed(2)}</b>) &nbsp;|&nbsp; ` +
+    `已过渡 <b>${pct}%</b> 到噪声形状` + (clampedZ >= transLen ? ' ✓ 过渡完成，截面完全变为噪声形状' : '');
+}
+
+document.getElementById('sz').addEventListener('input', draw);
+document.getElementById('tl').addEventListener('input', draw);
+draw();
+window.matchMedia('(prefers-color-scheme:dark)').addEventListener('change', draw);
+</script>
+</body>
+</html>

@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <title>音乐谱系拓展曲目推荐</title>
+  <style>
+    :root {
+      --color-background-primary:   #ffffff;
+      --color-background-secondary: #f5f4f0;
+      --color-text-primary:         #1a1916;
+      --color-text-secondary:       #5f5e5a;
+      --color-text-tertiary:        #888780;
+      --color-border-secondary:     #d3d1c7;
+      --color-border-tertiary:      #e0ded8;
+      --border-radius-md:           6px;
+      --border-radius-lg:           10px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--color-background-primary);
+      color: var(--color-text-primary);
+      font-family: -apple-system, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+      padding: 24px 20px 40px;
+    }
+    h2.sr-only { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); }
+    .section { margin-bottom:28px; }
+    .section-label { font-size:11px; font-weight:500; color:var(--color-text-tertiary); letter-spacing:.06em; text-transform:uppercase; margin-bottom:10px; padding-left:2px; }
+    .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(272px,1fr)); gap:10px; }
+    .card { background:var(--color-background-primary); border:0.5px solid var(--color-border-tertiary); border-radius:var(--border-radius-lg); padding:15px 17px; }
+    .card-top { display:flex; align-items:center; gap:8px; margin-bottom:10px; }
+    .badge { font-size:11px; font-weight:500; padding:3px 10px; border-radius:20px; white-space:nowrap; }
+    .genre { font-size:15px; font-weight:500; color:var(--color-text-primary); margin-bottom:1px; }
+    .era { font-size:12px; color:var(--color-text-tertiary); margin-bottom:9px; }
+    .album-row { display:flex; align-items:baseline; gap:5px; margin-bottom:3px; flex-wrap:wrap; }
+    .album-label { font-size:11px; color:var(--color-text-tertiary); white-space:nowrap; flex-shrink:0; }
+    .album-title { font-size:13px; font-weight:500; color:var(--color-text-primary); }
+    .album-year { font-size:12px; color:var(--color-text-secondary); }
+    .reason { font-size:12.5px; color:var(--color-text-secondary); line-height:1.6; margin:5px 0 9px; }
+    .track-row { background:var(--color-background-secondary); border-radius:var(--border-radius-md); padding:7px 11px; display:flex; align-items:center; gap:8px; }
+    .track-icon { font-size:14px; color:var(--color-text-tertiary); }
+    .track-info { flex:1; min-width:0; }
+    .track-name { font-size:13px; font-weight:500; color:var(--color-text-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .track-artist { font-size:11.5px; color:var(--color-text-secondary); }
+    .connection { font-size:11.5px; color:var(--color-text-tertiary); margin-top:8px; padding:6px 10px; border-left:2px solid var(--color-border-secondary); line-height:1.5; }
+  </style>
+</head>
+<body>
+
+<h2 class="sr-only">音乐谱系拓展曲目推荐，涵盖 Jazz Hip-Hop、Nujabes、Neo-Soul、J-Soul、テクノポップ、日本新世代、当代日本爵士七个分支</h2>
+
+<div class="section">
+  <div class="section-label">Hip-Hop 分支</div>
+  <div class="grid">
+
+    <div class="card">
+      <div class="card-top">
+        <span class="badge" style="background:#FAEEDA;color:#633806">Jazz Hip-Hop</span>
+      </div>
+      <div class="genre">Jazz Hip-Hop</div>
+      <div class="era">1990s初 · 纽约</div>
+      <div class="album-row">
+        <span class="album-label">专辑</span>
+        <span class="album-title">A Tribe Called Quest — <em>The Low End Theory</em></span>
+        <span class="album-year">1991</span>
+      </div>
+      <div class="reason">将爵士双贝斯原声采样直接铺在说唱下面，第一次让人感觉 Hip-Hop 可以「呼吸」。Gang Starr 的 DJ Premier 采样手法更精密，但 ATCQ 这张更适合入门。</div>
+      <div class="track-row">
+        <span class="track-icon">♪</span>
+        <div class="track-info">
+          <div class="track-name">Scenario</div>
+          <div class="track-artist">A Tribe Called Quest</div>
+        </div>
+      </div>
+      <div class="connection">和 Jazz 的连接：整张专辑的贝斯线直接采样自 Ron Carter（Miles Davis 的御用贝斯手）</div>
+    </div>
+
+    <div class="card">
+      <div class="card-top">
+        <span class="badge" style="background:#FAEEDA;color:#633806">Nujabes / Lo-fi</span>
+      </div>
+      <div class="genre">Nujabes / Lo-fi</div>
+      <div class="era">1990s末–2000s · 东京</div>
+      <div class="album-row">
+        <span class="album-label">专辑</span>
+        <span class="album-title">Nujabes — <em>Modal Soul</em></span>
+        <span class="album-year">2005</span>
+      </div>
+      <div class="reason">专辑名直接致敬 Miles Davis 的 Modal Jazz。Nujabes 把爵士采样做得像冥想，《Feather》是公认入门曲，《Luv(sic) Part 2》则是封神之作。</div>
+      <div class="track-row">
+        <span class="track-icon">♪</span>
+        <div class="track-info">
+          <div class="track-name">Feather</div>
+          <div class="track-artist">Nujabes ft. Cise Starr</div>
+        </div>
+      </div>
+      <div class="connection">听完后可以去找《Samurai Champloo》OST——整部动画的气质就是 Nujabes 音乐的视觉延伸</div>
+    </div>
+
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-label">Soul 延伸 → 日本 R&amp;B</div>
+  <div class="grid">
+
+    <div class="card">
+      <div class="card-top">
+        <span class="badge" style="background:#FAECE7;color:#712B13">Neo-Soul</span>
+      </div>
+      <div class="genre">Neo-Soul</div>
+      <div class="era">1990s中 · 美国</div>
+      <div class="album-row">
+        <span class="album-label">专辑</span>
+        <span class="album-title">Erykah Badu — <em>Baduizm</em></span>
+        <span class="album-year">1997</span>
+      </div>
+      <div class="reason">Neo-Soul 的宣言之作。Erykah Badu 把 Aretha Franklin 的情感力量、Hip-Hop 的节拍底子和爵士的和声包裹在一起，嗓音像烟又像丝。</div>
+      <div class="track-row">
+        <span class="track-icon">♪</span>
+        <div class="track-info">
+          <div class="track-name">On &amp; On</div>
+          <div class="track-artist">Erykah Badu</div>
+        </div>
+      </div>
+      <div class="connection">进阶选项：D'Angelo《Voodoo》（2000），将 Funk 律动和 Neo-Soul 融合到极致</div>
+    </div>
+
+    <div class="card">
+      <div class="card-top">
+        <span class="badge" style="background:#FBEAF0;color:#72243E">J-Soul / R&amp;B</span>
+      </div>
+      <div class="genre">J-Soul / R&amp;B</div>
+      <div class="era">1998–2000s · 日本</div>
+      <div class="album-row">
+        <span class="album-label">专辑</span>
+        <span class="album-title">宇多田ヒカル — <em>First Love</em></span>
+        <span class="album-year">1999</span>
+      </div>
+      <div class="reason">日本史上最畅销专辑（765万张）。第一首歌响起你就明白她为什么改变了 J-Pop——R&B 切分节奏和个人书写在此之前几乎不存在于日本主流。</div>
+      <div class="track-row">
+        <span class="track-icon">♪</span>
+        <div class="track-info">
+          <div class="track-name">Automatic</div>
+          <div class="track-artist">宇多田ヒカル</div>
+        </div>
+      </div>
+      <div class="connection">听《Automatic》时注意贝斯线——那个律动直接来自美国 R&B，在 1998 年的日本是破天荒的</div>
+    </div>
+
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-label">涩谷系延伸 → 日本现代流行</div>
+  <div class="grid">
+
+    <div class="card">
+      <div class="card-top">
+        <span class="badge" style="background:#FBEAF0;color:#72243E">テクノポップ</span>
+      </div>
+      <div class="genre">テクノポップ / 電音</div>
+      <div class="era">2000s–今 · 日本</div>
+      <div class="album-row">
+        <span class="album-label">专辑</span>
+        <span class="album-title">Perfume — <em>GAME</em></span>
+        <span class="album-year">2008</span>
+      </div>
+      <div class="reason">中田ヤスタカ将三人组的声音完全机械化处理，和涩谷系「刻意引号」的精神一脉相承。Dance 律动底下有非常精密的合成器和声架构。</div>
+      <div class="track-row">
+        <span class="track-icon">♪</span>
+        <div class="track-info">
+          <div class="track-name">ポリリズム</div>
+          <div class="track-artist">Perfume</div>
+        </div>
+      </div>
+      <div class="connection">「ポリリズム」即 Polyrhythm（复节奏），歌曲结构本身就是对 Funk 多节奏传统的电子化致敬</div>
+    </div>
+
+    <div class="card">
+      <div class="card-top">
+        <span class="badge" style="background:#FBEAF0;color:#72243E">日本新世代</span>
+      </div>
+      <div class="genre">日本新世代 / Hyperpop</div>
+      <div class="era">2010s–今</div>
+      <div class="album-row">
+        <span class="album-label">专辑</span>
+        <span class="album-title">YOASOBI — <em>THE BOOK</em></span>
+        <span class="album-year">2021</span>
+      </div>
+      <div class="reason">「小说转化为音乐」的概念本身就是涩谷系后现代精神的数字版。《夜に駆ける》的钢琴与电子节拍组合是 2020 年代 J-Pop 的标志性音色。</div>
+      <div class="track-row">
+        <span class="track-icon">♪</span>
+        <div class="track-info">
+          <div class="track-name">夜に駆ける</div>
+          <div class="track-artist">YOASOBI</div>
+        </div>
+      </div>
+      <div class="connection">对比听：ずっと真夜中でいいのに《秒針を噛む》——情绪性旋律密度更高，更接近「过载的美感」</div>
+    </div>
+
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-label">Jazz 日本分支</div>
+  <div class="grid">
+
+    <div class="card">
+      <div class="card-top">
+        <span class="badge" style="background:#E1F5EE;color:#085041">当代日本爵士</span>
+      </div>
+      <div class="genre">当代日本爵士</div>
+      <div class="era">2000s–今</div>
+      <div class="album-row">
+        <span class="album-label">专辑</span>
+        <span class="album-title">上原ひろみ — <em>Another Mind</em></span>
+        <span class="album-year">2003</span>
+      </div>
+      <div class="reason">出道即爆炸。上原ひろみ将古典训练、爵士即兴与 Prog Rock 能量融为一体，钢琴技术极度精密，但听感完全不学术——像在看特技表演。</div>
+      <div class="track-row">
+        <span class="track-icon">♪</span>
+        <div class="track-info">
+          <div class="track-name">Reminiscence</div>
+          <div class="track-artist">上原ひろみ</div>
+        </div>
+      </div>
+      <div class="connection">进阶选项：小曽根真《OZONE 55》——更接近传统 Jazz Piano Trio，适合在听完 Kind of Blue 之后接着听</div>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>

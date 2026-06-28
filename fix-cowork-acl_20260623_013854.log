@@ -1,0 +1,39 @@
+﻿[01:38:54] [STEP] Claude Cowork ACL 修复脚本
+[01:38:54] [INFO] 日志文件: C:\Users\Administrator\quartz\fix-cowork-acl_20260623_013854.log
+[01:38:54] [WARN] >>> DRY RUN 模式: 仅检查, 不修改文件 <<<
+[01:38:54] [SUCCESS] 管理员权限: OK (当前用户 DESKTOP-SL06T65\Administrator)
+[01:38:54] [SUCCESS] Bundle 目录: C:\Users\Administrator\AppData\Local\Packages\Claude_pzs8sxrjxfjjc\LocalCache\Roaming\Claude\vm_bundles
+[01:38:54] [STEP] [1/5] 停止 Claude 与 Cowork 进程
+[01:38:54] [INFO]   停止: claude (PID 2084)
+[01:38:54] [INFO]   停止: claude (PID 4816)
+[01:38:54] [INFO]   停止: claude (PID 5488)
+[01:38:54] [INFO]   停止: claude (PID 6684)
+[01:38:54] [INFO]   停止: claude (PID 7340)
+[01:38:54] [INFO]   停止: claude (PID 16180)
+[01:38:54] [INFO]   停止: claude (PID 23024)
+[01:38:54] [INFO]   停止: claude (PID 27676)
+[01:38:54] [INFO]   停止: claude (PID 40604)
+[01:38:54] [INFO]   停止: cowork-svc (PID 6924)
+[01:38:56] [STEP] [2/5] 关闭残留的 Cowork VM
+[01:38:56] [WARN]   Hyper-V 模块不可用, 跳过此步: 无法将“Get-VM”项识别为 cmdlet、函数、脚本文件或可运行程序的名称。请检查名称的拼写，如果包括路径，请确保路径正确，然后再试一次。
+[01:38:56] [INFO]   (不影响 ACL 修复继续执行)
+[01:38:56] [STEP] [3/5] 取得 bundle 目录所有权
+[01:38:56] [INFO]   [DRY RUN] 跳过 takeown
+[01:38:56] [STEP] [4/5] 设置 ACL
+[01:38:56] [INFO]   授予 Administrators 完全控制...
+[01:38:56] [INFO]   授予 NT VIRTUAL MACHINE\Virtual Machines 完全控制...
+[01:38:56] [STEP] [5/5] 验证 VHDX 文件 ACL
+[01:38:56] [INFO]   claudevm.bundle\rootfs.vhdx
+[01:38:56] [ERROR]     Virtual Machines 权限: 缺失 (修复未生效)
+[01:38:56] [INFO]   claudevm.bundle\sessiondata.vhdx
+[01:38:56] [ERROR]     Virtual Machines 权限: 缺失 (修复未生效)
+[01:38:56] [INFO]   claudevm.bundle\smol-bin.vhdx
+[01:38:56] [ERROR]     Virtual Machines 权限: 缺失 (修复未生效)
+[01:38:56] [STEP] ==========================================
+[01:38:56] [SUCCESS] DRY RUN 完成 (未修改任何文件)
+[01:38:56] [STEP] ==========================================
+[01:38:56] [INFO] 下一步:
+[01:38:56] [INFO]   1. 启动 Claude (无需以管理员身份运行)
+[01:38:56] [INFO]   2. 触发 Cowork 任务, 验证 VM 启动
+[01:38:56] [INFO]   3. 若 [5/5] 验证失败, 在错误对话框点 'Reinstall workspace'
+[01:38:56] [INFO]   4. 日志已保存到: C:\Users\Administrator\quartz\fix-cowork-acl_20260623_013854.log

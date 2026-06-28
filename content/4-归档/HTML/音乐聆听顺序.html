@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <title>七大音乐流派入门必听指南</title>
+  <style>
+    :root {
+      --color-background-primary:   #ffffff;
+      --color-background-secondary: #f5f4f0;
+      --color-text-primary:         #1a1916;
+      --color-text-secondary:       #5f5e5a;
+      --color-text-tertiary:        #888780;
+      --color-border-secondary:     #d3d1c7;
+      --color-border-tertiary:      #e0ded8;
+      --border-radius-md:           6px;
+      --border-radius-lg:           10px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--color-background-primary);
+      color: var(--color-text-primary);
+      font-family: -apple-system, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+      padding: 24px 20px 40px;
+    }
+    h2.sr-only { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); }
+    .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:12px; padding:4px 0 20px; }
+    .card { background:var(--color-background-primary); border:0.5px solid var(--color-border-tertiary); border-radius:var(--border-radius-lg); padding:16px 18px; transition:border-color .15s; }
+    .card:hover { border-color:var(--color-border-secondary); }
+    .card-top { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+    .badge { font-size:11px; font-weight:500; padding:3px 10px; border-radius:20px; white-space:nowrap; flex-shrink:0; }
+    .num { font-size:11px; color:var(--color-text-tertiary); margin-left:auto; font-variant-numeric:tabular-nums; }
+    .genre { font-size:16px; font-weight:500; color:var(--color-text-primary); margin-bottom:2px; }
+    .era { font-size:12px; color:var(--color-text-tertiary); margin-bottom:10px; }
+    .album-row { display:flex; align-items:baseline; gap:6px; margin-bottom:4px; }
+    .album-label { font-size:11px; color:var(--color-text-tertiary); white-space:nowrap; }
+    .album-title { font-size:13px; font-weight:500; color:var(--color-text-primary); }
+    .album-year { font-size:12px; color:var(--color-text-secondary); }
+    .reason { font-size:12.5px; color:var(--color-text-secondary); line-height:1.6; margin:6px 0 10px; }
+    .track-row { background:var(--color-background-secondary); border-radius:var(--border-radius-md); padding:8px 12px; display:flex; align-items:center; gap:8px; }
+    .track-icon { font-size:15px; color:var(--color-text-tertiary); }
+    .track-info { flex:1; min-width:0; }
+    .track-name { font-size:13px; font-weight:500; color:var(--color-text-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .track-artist { font-size:11.5px; color:var(--color-text-secondary); }
+    .divider { border:none; border-top:0.5px solid var(--color-border-tertiary); margin:20px 0 16px; }
+    .route-wrap { background:var(--color-background-secondary); border-radius:var(--border-radius-lg); padding:16px 20px; }
+    .route-title { font-size:13px; font-weight:500; color:var(--color-text-secondary); margin-bottom:14px; }
+    .route-steps { display:flex; flex-wrap:wrap; align-items:center; gap:6px; }
+    .step-pill { font-size:12.5px; padding:5px 12px; border-radius:20px; font-weight:500; }
+    .arrow { font-size:13px; color:var(--color-text-tertiary); }
+    .route-note { font-size:12px; color:var(--color-text-tertiary); margin-top:12px; line-height:1.6; }
+  </style>
+</head>
+<body>
+
+<h2 class="sr-only">七大音乐流派入门必听指南，含专辑推荐、代表单曲及聆听顺序建议</h2>
+
+<div class="grid">
+
+  <div class="card">
+    <div class="card-top">
+      <span class="badge" style="background:#EEEDFE;color:#3C3489">Blues</span>
+      <span class="num">第 1 步</span>
+    </div>
+    <div class="genre">Blues 蓝调</div>
+    <div class="era">19世纪末 · 密西西比三角洲</div>
+    <div class="album-row">
+      <span class="album-label">专辑</span>
+      <span class="album-title">B.B. King — <em>Live at the Regal</em></span>
+      <span class="album-year">1965</span>
+    </div>
+    <div class="reason">现场录音，B.B. King 的吉他与嗓音完美展示蓝调的「哭腔」与「呼唤-回应」。听完就明白为什么吉他能「哭泣」。</div>
+    <div class="track-row">
+      <span class="track-icon">♪</span>
+      <div class="track-info">
+        <div class="track-name">Every Day I Have the Blues</div>
+        <div class="track-artist">B.B. King</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-top">
+      <span class="badge" style="background:#FAECE7;color:#712B13">R&B</span>
+      <span class="num">第 2 步</span>
+    </div>
+    <div class="genre">R&B 节奏蓝调</div>
+    <div class="era">1940s–1960s · 美国城市</div>
+    <div class="album-row">
+      <span class="album-label">专辑</span>
+      <span class="album-title">Ray Charles — <em>Modern Sounds in Country and Western Music</em></span>
+      <span class="album-year">1962</span>
+    </div>
+    <div class="reason">Ray Charles 将蓝调、Gospel 与流行融为一体，嗓音极具感染力。R&B「情感直给」的核心特质在此体现得淋漓尽致。</div>
+    <div class="track-row">
+      <span class="track-icon">♪</span>
+      <div class="track-info">
+        <div class="track-name">Hit the Road Jack</div>
+        <div class="track-artist">Ray Charles</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-top">
+      <span class="badge" style="background:#FAEEDA;color:#633806">Soul</span>
+      <span class="num">第 3 步</span>
+    </div>
+    <div class="genre">Soul 灵魂乐</div>
+    <div class="era">1960s–1970s · Memphis &amp; Motown</div>
+    <div class="album-row">
+      <span class="album-label">专辑</span>
+      <span class="album-title">Aretha Franklin — <em>I Never Loved a Man the Way I Love You</em></span>
+      <span class="album-year">1967</span>
+    </div>
+    <div class="reason">Aretha 的嗓音将 Gospel 的精神力量完全世俗化。第一首 Respect 响起，你就明白什么叫「灵魂」。</div>
+    <div class="track-row">
+      <span class="track-icon">♪</span>
+      <div class="track-info">
+        <div class="track-name">Respect</div>
+        <div class="track-artist">Aretha Franklin</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-top">
+      <span class="badge" style="background:#F5C4B3;color:#712B13">Funk</span>
+      <span class="num">第 4 步</span>
+    </div>
+    <div class="genre">Funk 放克</div>
+    <div class="era">1960s末–1970s · 全美</div>
+    <div class="album-row">
+      <span class="album-label">专辑</span>
+      <span class="album-title">James Brown — <em>Sex Machine</em></span>
+      <span class="album-year">1970</span>
+    </div>
+    <div class="reason">James Brown 把节拍变成武器。这张专辑从头到尾都在示范什么叫「The One」——第一拍的力量，身体会先于大脑作出反应。</div>
+    <div class="track-row">
+      <span class="track-icon">♪</span>
+      <div class="track-info">
+        <div class="track-name">Sex Machine</div>
+        <div class="track-artist">James Brown</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-top">
+      <span class="badge" style="background:#E1F5EE;color:#085041">Jazz</span>
+      <span class="num">第 5 步</span>
+    </div>
+    <div class="genre">Jazz 爵士乐</div>
+    <div class="era">1900s– · 新奥尔良→纽约→全球</div>
+    <div class="album-row">
+      <span class="album-label">专辑</span>
+      <span class="album-title">Miles Davis — <em>Kind of Blue</em></span>
+      <span class="album-year">1959</span>
+    </div>
+    <div class="reason">史上最畅销爵士专辑，以「调式即兴」取代复杂和弦，是进入 Jazz 世界最平缓、最美的入口。全程没有一个音是多余的。</div>
+    <div class="track-row">
+      <span class="track-icon">♪</span>
+      <div class="track-info">
+        <div class="track-name">So What</div>
+        <div class="track-artist">Miles Davis</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-top">
+      <span class="badge" style="background:#B5D4F4;color:#0C447C">City Pop</span>
+      <span class="num">第 6 步</span>
+    </div>
+    <div class="genre">City Pop 城市流行</div>
+    <div class="era">1978–1989 · 东京</div>
+    <div class="album-row">
+      <span class="album-label">专辑</span>
+      <span class="album-title">山下達郎 — <em>For You</em></span>
+      <span class="album-year">1982</span>
+    </div>
+    <div class="reason">泡沫经济时代的极致录音工艺，将 AOR 的都市感、Funk 律动与日本流行旋律完美融合。《Loveland, Island》是公认的 City Pop 圣典。</div>
+    <div class="track-row">
+      <span class="track-icon">♪</span>
+      <div class="track-info">
+        <div class="track-name">Plastic Love</div>
+        <div class="track-artist">竹内まりや</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-top">
+      <span class="badge" style="background:#9FE1CB;color:#085041">涩谷系</span>
+      <span class="num">第 7 步</span>
+    </div>
+    <div class="genre">涩谷系 Shibuya-kei</div>
+    <div class="era">1990s · 东京涩谷</div>
+    <div class="album-row">
+      <span class="album-label">专辑</span>
+      <span class="album-title">Pizzicato Five — <em>The Sound of Music by Pizzicato Five</em></span>
+      <span class="album-year">1995</span>
+    </div>
+    <div class="reason">涩谷系最易入口的专辑，将法国香颂、Bossa Nova 与电子流行拼贴成一个精致的「引号世界」，聆听时能感受到刻意的趣味感。</div>
+    <div class="track-row">
+      <span class="track-icon">♪</span>
+      <div class="track-info">
+        <div class="track-name">Baby Love Child</div>
+        <div class="track-artist">Pizzicato Five</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<hr class="divider">
+
+<div class="route-wrap">
+  <div class="route-title">推荐聆听顺序</div>
+  <div class="route-steps">
+    <span class="step-pill" style="background:#EEEDFE;color:#3C3489">Blues</span>
+    <span class="arrow">→</span>
+    <span class="step-pill" style="background:#FAECE7;color:#712B13">R&B</span>
+    <span class="arrow">→</span>
+    <span class="step-pill" style="background:#FAEEDA;color:#633806">Soul</span>
+    <span class="arrow">→</span>
+    <span class="step-pill" style="background:#F5C4B3;color:#712B13">Funk</span>
+    <span class="arrow">→</span>
+    <span class="step-pill" style="background:#E1F5EE;color:#085041">Jazz</span>
+    <span class="arrow">→</span>
+    <span class="step-pill" style="background:#B5D4F4;color:#0C447C">City Pop</span>
+    <span class="arrow">→</span>
+    <span class="step-pill" style="background:#9FE1CB;color:#085041">涩谷系</span>
+  </div>
+  <div class="route-note">顺序遵循「历史演化」逻辑而非难度——Blues 是所有后续流派的根，听完前四个你会发现 Jazz 里藏着熟悉的东西，而 City Pop 和涩谷系在你已经理解西方来源之后，会显得格外有趣。不建议从 Jazz 开始，它的即兴逻辑在没有节奏基础时容易感觉「飘」。</div>
+</div>
+
+</body>
+</html>

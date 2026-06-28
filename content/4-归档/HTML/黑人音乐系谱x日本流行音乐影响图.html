@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>黑人音乐谱系与日本流行音乐影响图</title>
+<style>
+:root {
+  --bg: #f5f4f0;
+  --bg2: #eeecea;
+  --surface: #ffffff;
+  --border: rgba(0,0,0,0.1);
+  --border-hover: rgba(0,0,0,0.22);
+  --text-primary: #1a1918;
+  --text-secondary: #5a5856;
+  --text-muted: #8a8784;
+  --divider: rgba(0,0,0,0.07);
+
+  --purple-light: #4a3db8;
+  --purple: #6255d8;
+  --purple-dim: rgba(98,85,216,0.1);
+
+  --teal-light: #0a6e50;
+  --teal: #0f8060;
+  --teal-dim: rgba(15,128,96,0.1);
+
+  --coral-light: #8e3018;
+  --coral: #c84c28;
+  --coral-dim: rgba(200,76,40,0.1);
+
+  --amber-light: #7a4a00;
+  --amber: #a06000;
+  --amber-dim: rgba(160,96,0,0.1);
+
+  --blue-light: #0c3e80;
+  --blue: #185fb8;
+  --blue-dim: rgba(24,95,184,0.1);
+
+  --pink-light: #6e1840;
+  --pink: #a03068;
+  --pink-dim: rgba(160,48,104,0.1);
+
+  /* 新增：给原来灰色节点的颜色 */
+  --olive-light: #3d4a10;
+  --olive: #5a6e18;
+  --olive-dim: rgba(90,110,24,0.1);
+
+  --brown-light: #5a3010;
+  --brown: #7a4820;
+  --brown-dim: rgba(122,72,32,0.1);
+
+  --slate-light: #1a3050;
+  --slate: #2a4870;
+  --slate-dim: rgba(42,72,112,0.1);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: -apple-system, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  min-height: 100vh;
+  padding: 40px 20px 80px;
+}
+
+.page-header {
+  max-width: 1080px;
+  margin: 0 auto 40px;
+}
+.page-header h1 {
+  font-size: 24px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  margin-bottom: 10px;
+}
+.page-header p {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.75;
+}
+
+.chart-wrap {
+  max-width: 1080px;
+  margin: 0 auto;
+  overflow-x: auto;
+}
+
+svg { display: block; width: 100%; min-width: 720px; }
+
+.node-group { cursor: pointer; }
+.node-group:hover .nr { filter: brightness(0.92); }
+
+.era-label {
+  font-size: 10.5px;
+  fill: var(--text-muted);
+  font-family: 'SF Mono', 'Fira Code', monospace;
+}
+
+.tooltip {
+  position: fixed;
+  background: var(--surface);
+  border: 1px solid var(--border-hover);
+  border-radius: 10px;
+  padding: 14px 18px;
+  font-size: 13px;
+  line-height: 1.65;
+  max-width: 290px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.16s;
+  z-index: 999;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+}
+.tooltip.vis { opacity: 1; }
+.tooltip h3 { font-size: 14px; font-weight: 500; margin-bottom: 3px; }
+.tooltip .et { font-size: 11px; color: var(--text-muted); margin-bottom: 8px; font-family: monospace; }
+.tooltip p { color: var(--text-secondary); font-size: 12.5px; }
+.tooltip .ar { margin-top: 8px; font-size: 11.5px; color: var(--text-muted); font-style: italic; }
+
+.legend {
+  max-width: 1080px;
+  margin: 32px auto 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 22px;
+  padding: 18px 22px;
+  background: var(--bg2);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+}
+.li { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-secondary); }
+.ll { width: 30px; height: 2px; border-radius: 1px; flex-shrink: 0; }
+.ll.d { background: none !important; border-top: 2px dashed; height: 0; border-radius: 0; }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <h1>黑人音乐谱系 × 日本流行音乐影响图</h1>
+  <p>从非洲音乐传统出发，经由 Blues · Jazz · R&amp;B · Soul · Funk · Hip-Hop · Jazz Hip-Hop / Neo-Soul 演变，汇入日本 City Pop、涩谷系及当代流行音乐的完整脉络。<br>鼠标悬停节点查看详细介绍。</p>
+</div>
+
+<div class="chart-wrap">
+<svg viewBox="0 0 1060 1140" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+    <path d="M2 1.5L8 5L2 8.5" fill="none" stroke="context-stroke" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+  </marker>
+</defs>
+
+<!-- dividers -->
+<line x1="118" y1="100" x2="1045" y2="100" stroke="rgba(0,0,0,0.07)" stroke-width="0.5"/>
+<line x1="118" y1="210" x2="1045" y2="210" stroke="rgba(0,0,0,0.07)" stroke-width="0.5"/>
+<line x1="118" y1="315" x2="1045" y2="315" stroke="rgba(0,0,0,0.07)" stroke-width="0.5"/>
+<line x1="118" y1="425" x2="1045" y2="425" stroke="rgba(0,0,0,0.07)" stroke-width="0.5"/>
+<line x1="118" y1="540" x2="1045" y2="540" stroke="rgba(0,0,0,0.07)" stroke-width="0.5"/>
+<line x1="118" y1="655" x2="1045" y2="655" stroke="rgba(0,0,0,0.07)" stroke-width="0.5"/>
+<line x1="118" y1="770" x2="1045" y2="770" stroke="rgba(0,0,0,0.07)" stroke-width="0.5"/>
+<line x1="118" y1="880" x2="1045" y2="880" stroke="rgba(0,0,0,0.07)" stroke-width="0.5"/>
+<line x1="118" y1="990" x2="1045" y2="990" stroke="rgba(0,0,0,0.07)" stroke-width="0.5"/>
+
+<!-- era labels -->
+<text class="era-label" x="8" y="58">非洲起源</text>
+<text class="era-label" x="8" y="163">19世纪末</text>
+<text class="era-label" x="8" y="270">1900–30s</text>
+<text class="era-label" x="8" y="378">1940–50s</text>
+<text class="era-label" x="8" y="492">1960–70s</text>
+<text class="era-label" x="8" y="606">1970–80s</text>
+<text class="era-label" x="8" y="722">1980–90s</text>
+<text class="era-label" x="8" y="835">1990s</text>
+<text class="era-label" x="8" y="945">2000s</text>
+<text class="era-label" x="8" y="1055">2010s+</text>
+
+<!-- ===== NODES ===== -->
+
+<!-- R0: Africa — 改为 olive 橄榄色 -->
+<g class="node-group" data-id="africa">
+  <rect class="nr" x="398" y="28" width="184" height="46" rx="9" fill="rgba(90,110,24,0.12)" stroke="#5a6e18" stroke-width="1"/>
+  <text x="490" y="57" text-anchor="middle" font-size="13.5" font-weight="500" fill="#3d4a10">非洲音乐传统</text>
+</g>
+
+<!-- R1: Blues, Gospel -->
+<g class="node-group" data-id="blues">
+  <rect class="nr" x="186" y="118" width="148" height="74" rx="9" fill="var(--purple-dim)" stroke="var(--purple)" stroke-width="1"/>
+  <text x="260" y="146" text-anchor="middle" font-size="15" font-weight="600" fill="var(--purple-light)">Blues</text>
+  <text x="260" y="165" text-anchor="middle" font-size="11" fill="var(--purple)" opacity=".85">密西西比三角洲</text>
+  <text x="260" y="180" text-anchor="middle" font-size="11" fill="var(--purple)" opacity=".65">19世纪末</text>
+</g>
+<!-- Gospel — 改为 brown 棕褐色 -->
+<g class="node-group" data-id="gospel">
+  <rect class="nr" x="595" y="124" width="148" height="62" rx="9" fill="rgba(122,72,32,0.1)" stroke="#7a4820" stroke-width="1"/>
+  <text x="669" y="149" text-anchor="middle" font-size="13" font-weight="500" fill="#5a3010">Gospel &amp; 劳动歌</text>
+  <text x="669" y="168" text-anchor="middle" font-size="11" fill="#7a4820" opacity=".75">黑人教会传统</text>
+</g>
+
+<!-- R2: Jazz, R&B, Ragtime -->
+<g class="node-group" data-id="jazz">
+  <rect class="nr" x="780" y="224" width="152" height="74" rx="9" fill="var(--teal-dim)" stroke="var(--teal)" stroke-width="1"/>
+  <text x="856" y="252" text-anchor="middle" font-size="15" font-weight="600" fill="var(--teal-light)">Jazz</text>
+  <text x="856" y="271" text-anchor="middle" font-size="11" fill="var(--teal)" opacity=".85">新奥尔良 → 纽约</text>
+  <text x="856" y="286" text-anchor="middle" font-size="11" fill="var(--teal)" opacity=".65">1900s–1930s</text>
+</g>
+<g class="node-group" data-id="rnb">
+  <rect class="nr" x="186" y="224" width="148" height="74" rx="9" fill="var(--purple-dim)" stroke="var(--purple)" stroke-width="1"/>
+  <text x="260" y="252" text-anchor="middle" font-size="15" font-weight="600" fill="var(--purple-light)">R&amp;B</text>
+  <text x="260" y="271" text-anchor="middle" font-size="11" fill="var(--purple)" opacity=".85">城市黑人社区</text>
+  <text x="260" y="286" text-anchor="middle" font-size="11" fill="var(--purple)" opacity=".65">1940s–1950s</text>
+</g>
+<!-- Ragtime — 改为 slate 深蓝板岩色 -->
+<g class="node-group" data-id="ragtime">
+  <rect class="nr" x="490" y="230" width="134" height="62" rx="9" fill="rgba(42,72,112,0.1)" stroke="#2a4870" stroke-width="1"/>
+  <text x="557" y="256" text-anchor="middle" font-size="13" font-weight="500" fill="#1a3050">Ragtime</text>
+  <text x="557" y="274" text-anchor="middle" font-size="11" fill="#2a4870" opacity=".75">欧洲和声 × 切分</text>
+</g>
+
+<!-- R3: Soul, Funk, Modal Jazz -->
+<g class="node-group" data-id="soul">
+  <rect class="nr" x="140" y="335" width="152" height="74" rx="9" fill="var(--coral-dim)" stroke="var(--coral)" stroke-width="1"/>
+  <text x="216" y="363" text-anchor="middle" font-size="15" font-weight="600" fill="var(--coral-light)">Soul</text>
+  <text x="216" y="382" text-anchor="middle" font-size="11" fill="var(--coral)" opacity=".85">Memphis · Motown</text>
+  <text x="216" y="397" text-anchor="middle" font-size="11" fill="var(--coral)" opacity=".65">1950s末–1970s</text>
+</g>
+<g class="node-group" data-id="funk">
+  <rect class="nr" x="336" y="335" width="152" height="74" rx="9" fill="var(--coral-dim)" stroke="var(--coral)" stroke-width="1"/>
+  <text x="412" y="363" text-anchor="middle" font-size="15" font-weight="600" fill="var(--coral-light)">Funk</text>
+  <text x="412" y="382" text-anchor="middle" font-size="11" fill="var(--coral)" opacity=".85">Soul 节奏裂变</text>
+  <text x="412" y="397" text-anchor="middle" font-size="11" fill="var(--coral)" opacity=".65">1960s末–1970s</text>
+</g>
+<g class="node-group" data-id="jazzmodal">
+  <rect class="nr" x="660" y="339" width="168" height="64" rx="9" fill="var(--teal-dim)" stroke="var(--teal)" stroke-width="1" stroke-dasharray="5 3"/>
+  <text x="744" y="365" text-anchor="middle" font-size="13" font-weight="500" fill="var(--teal-light)">Modal / Free Jazz</text>
+  <text x="744" y="383" text-anchor="middle" font-size="11" fill="var(--teal)" opacity=".75">Miles Davis · Coltrane</text>
+</g>
+
+<!-- R4: Hip-Hop, Disco, AOR, Fusion -->
+<g class="node-group" data-id="hiphop">
+  <rect class="nr" x="100" y="450" width="152" height="74" rx="9" fill="var(--amber-dim)" stroke="var(--amber)" stroke-width="1"/>
+  <text x="176" y="478" text-anchor="middle" font-size="15" font-weight="600" fill="var(--amber-light)">Hip-Hop</text>
+  <text x="176" y="497" text-anchor="middle" font-size="11" fill="var(--amber)" opacity=".85">南布朗克斯</text>
+  <text x="176" y="512" text-anchor="middle" font-size="11" fill="var(--amber)" opacity=".65">1970s末</text>
+</g>
+<!-- Disco — 改为 pink 系 -->
+<g class="node-group" data-id="disco">
+  <rect class="nr" x="296" y="456" width="130" height="62" rx="9" fill="var(--pink-dim)" stroke="var(--pink)" stroke-width="1"/>
+  <text x="361" y="482" text-anchor="middle" font-size="13" font-weight="500" fill="var(--pink-light)">Disco</text>
+  <text x="361" y="500" text-anchor="middle" font-size="11" fill="var(--pink)" opacity=".75">纽约夜店文化</text>
+</g>
+<!-- AOR — 改为 slate 深蓝色 -->
+<g class="node-group" data-id="aor">
+  <rect class="nr" x="474" y="456" width="138" height="62" rx="9" fill="rgba(42,72,112,0.1)" stroke="#2a4870" stroke-width="1"/>
+  <text x="543" y="480" text-anchor="middle" font-size="13" font-weight="500" fill="#1a3050">AOR / Soft Rock</text>
+  <text x="543" y="498" text-anchor="middle" font-size="11" fill="#2a4870" opacity=".75">成人向摇滚</text>
+</g>
+<g class="node-group" data-id="jazzfusion">
+  <rect class="nr" x="658" y="456" width="156" height="62" rx="9" fill="var(--teal-dim)" stroke="var(--teal)" stroke-width="1" stroke-dasharray="5 3"/>
+  <text x="736" y="480" text-anchor="middle" font-size="13" font-weight="500" fill="var(--teal-light)">Jazz Fusion</text>
+  <text x="736" y="498" text-anchor="middle" font-size="11" fill="var(--teal)" opacity=".72">Weather Report · CTI</text>
+</g>
+
+<!-- R5: City Pop, Jazz Hip-Hop, Neo-Soul, Smooth Jazz -->
+<g class="node-group" data-id="jazzhiphop">
+  <rect class="nr" x="100" y="566" width="162" height="74" rx="9" fill="var(--amber-dim)" stroke="var(--amber)" stroke-width="1"/>
+  <text x="181" y="588" text-anchor="middle" font-size="14" font-weight="600" fill="var(--amber-light)">Jazz Hip-Hop</text>
+  <text x="181" y="607" text-anchor="middle" font-size="11" fill="var(--amber)" opacity=".85">ATCQ · Gang Starr</text>
+  <text x="181" y="622" text-anchor="middle" font-size="11" fill="var(--amber)" opacity=".65">1990s初</text>
+</g>
+<g class="node-group" data-id="citypop">
+  <rect class="nr" x="308" y="566" width="190" height="74" rx="9" fill="var(--blue-dim)" stroke="var(--blue)" stroke-width="1"/>
+  <text x="403" y="594" text-anchor="middle" font-size="15" font-weight="600" fill="var(--blue-light)">City Pop</text>
+  <text x="403" y="613" text-anchor="middle" font-size="11" fill="var(--blue)" opacity=".85">日本 1978–1989</text>
+  <text x="403" y="628" text-anchor="middle" font-size="11" fill="var(--blue)" opacity=".65">山下達郎 · 竹内まりや</text>
+</g>
+<g class="node-group" data-id="neosoul">
+  <rect class="nr" x="548" y="566" width="160" height="74" rx="9" fill="var(--coral-dim)" stroke="var(--coral)" stroke-width="1"/>
+  <text x="628" y="588" text-anchor="middle" font-size="14" font-weight="600" fill="var(--coral-light)">Neo-Soul</text>
+  <text x="628" y="607" text-anchor="middle" font-size="11" fill="var(--coral)" opacity=".85">Erykah Badu · D'Angelo</text>
+  <text x="628" y="622" text-anchor="middle" font-size="11" fill="var(--coral)" opacity=".65">1990s中</text>
+</g>
+<g class="node-group" data-id="smoothjazz">
+  <rect class="nr" x="760" y="572" width="152" height="62" rx="9" fill="var(--teal-dim)" stroke="var(--teal)" stroke-width="1" stroke-dasharray="5 3"/>
+  <text x="836" y="598" text-anchor="middle" font-size="13" font-weight="500" fill="var(--teal-light)">Smooth Jazz</text>
+  <text x="836" y="616" text-anchor="middle" font-size="11" fill="var(--teal)" opacity=".72">商业化爵士流行</text>
+</g>
+
+<!-- R6: Nujabes, Shibuya, J-R&B, Bossa -->
+<g class="node-group" data-id="nujabes">
+  <rect class="nr" x="100" y="678" width="162" height="74" rx="9" fill="var(--amber-dim)" stroke="var(--amber)" stroke-width="1"/>
+  <text x="181" y="700" text-anchor="middle" font-size="14" font-weight="600" fill="var(--amber-light)">Nujabes / Lo-fi</text>
+  <text x="181" y="719" text-anchor="middle" font-size="11" fill="var(--amber)" opacity=".85">日式爵士采样</text>
+  <text x="181" y="734" text-anchor="middle" font-size="11" fill="var(--amber)" opacity=".65">1990s末–2000s</text>
+</g>
+<g class="node-group" data-id="shibuya">
+  <rect class="nr" x="308" y="678" width="190" height="74" rx="9" fill="var(--blue-dim)" stroke="var(--blue)" stroke-width="1"/>
+  <text x="403" y="700" text-anchor="middle" font-size="15" font-weight="600" fill="var(--blue-light)">涩谷系</text>
+  <text x="403" y="719" text-anchor="middle" font-size="11" fill="var(--blue)" opacity=".85">Shibuya-kei 1990s</text>
+  <text x="403" y="734" text-anchor="middle" font-size="11" fill="var(--blue)" opacity=".65">Pizzicato Five · Cornelius</text>
+</g>
+<g class="node-group" data-id="jrnb">
+  <rect class="nr" x="552" y="678" width="158" height="74" rx="9" fill="var(--pink-dim)" stroke="var(--pink)" stroke-width="1"/>
+  <text x="631" y="700" text-anchor="middle" font-size="14" font-weight="600" fill="var(--pink-light)">J-Soul / R&amp;B</text>
+  <text x="631" y="719" text-anchor="middle" font-size="11" fill="var(--pink)" opacity=".85">宇多田ヒカル · MISIA</text>
+  <text x="631" y="734" text-anchor="middle" font-size="11" fill="var(--pink)" opacity=".65">1998–2000s</text>
+</g>
+<!-- Bossa Nova — 改为 olive 橄榄色 -->
+<g class="node-group" data-id="bossanova">
+  <rect class="nr" x="762" y="684" width="162" height="62" rx="9" fill="rgba(90,110,24,0.1)" stroke="#5a6e18" stroke-width="1"/>
+  <text x="843" y="710" text-anchor="middle" font-size="13" font-weight="500" fill="#3d4a10">Bossa Nova</text>
+  <text x="843" y="728" text-anchor="middle" font-size="11" fill="#5a6e18" opacity=".75">巴西 · 法国香颂</text>
+</g>
+
+<!-- R7: J-Hip-Hop, Jpop-Jazz, Techno-pop, Jazz-JP -->
+<g class="node-group" data-id="jhiphop">
+  <rect class="nr" x="100" y="790" width="162" height="74" rx="9" fill="var(--amber-dim)" stroke="var(--amber)" stroke-width="1"/>
+  <text x="181" y="812" text-anchor="middle" font-size="14" font-weight="600" fill="var(--amber-light)">日本 Hip-Hop</text>
+  <text x="181" y="831" text-anchor="middle" font-size="11" fill="var(--amber)" opacity=".85">KOHH · 舐達麻 · KID FRESINO</text>
+  <text x="181" y="846" text-anchor="middle" font-size="11" fill="var(--amber)" opacity=".65">2000s–今</text>
+</g>
+<g class="node-group" data-id="jazzpopjp">
+  <rect class="nr" x="308" y="790" width="190" height="74" rx="9" fill="var(--teal-dim)" stroke="var(--teal)" stroke-width="1"/>
+  <text x="403" y="812" text-anchor="middle" font-size="14" font-weight="600" fill="var(--teal-light)">日本爵士 / 前卫流行</text>
+  <text x="403" y="831" text-anchor="middle" font-size="11" fill="var(--teal)" opacity=".85">坂本龍一 · 大貫妙子</text>
+  <text x="403" y="846" text-anchor="middle" font-size="11" fill="var(--teal)" opacity=".65">Yellow Magic Orchestra</text>
+</g>
+<g class="node-group" data-id="technopop">
+  <rect class="nr" x="548" y="790" width="162" height="74" rx="9" fill="var(--pink-dim)" stroke="var(--pink)" stroke-width="1"/>
+  <text x="629" y="812" text-anchor="middle" font-size="14" font-weight="600" fill="var(--pink-light)">テクノポップ / 電音</text>
+  <text x="629" y="831" text-anchor="middle" font-size="11" fill="var(--pink)" opacity=".85">Perfume · capsule</text>
+  <text x="629" y="846" text-anchor="middle" font-size="11" fill="var(--pink)" opacity=".65">中田ヤスタカ</text>
+</g>
+<g class="node-group" data-id="jazzjpclub">
+  <rect class="nr" x="762" y="796" width="162" height="62" rx="9" fill="var(--teal-dim)" stroke="var(--teal)" stroke-width="1" stroke-dasharray="5 3"/>
+  <text x="843" y="822" text-anchor="middle" font-size="13" font-weight="500" fill="var(--teal-light)">日本爵士现场</text>
+  <text x="843" y="840" text-anchor="middle" font-size="11" fill="var(--teal)" opacity=".72">Blue Note Tokyo 文化</text>
+</g>
+
+<!-- R8: Lo-fi, City Pop Revival, Hyperpop-JP, Modern Jazz JP -->
+<g class="node-group" data-id="lofi">
+  <rect class="nr" x="100" y="900" width="162" height="74" rx="9" fill="var(--amber-dim)" stroke="var(--amber)" stroke-width="1"/>
+  <text x="181" y="922" text-anchor="middle" font-size="14" font-weight="600" fill="var(--amber-light)">Lo-fi / Chill Beats</text>
+  <text x="181" y="941" text-anchor="middle" font-size="11" fill="var(--amber)" opacity=".85">全球流媒体文化</text>
+  <text x="181" y="956" text-anchor="middle" font-size="11" fill="var(--amber)" opacity=".65">Nujabes 遗产</text>
+</g>
+<g class="node-group" data-id="citypoprevival">
+  <rect class="nr" x="308" y="900" width="190" height="74" rx="9" fill="var(--blue-dim)" stroke="var(--blue)" stroke-width="1"/>
+  <text x="403" y="922" text-anchor="middle" font-size="14" font-weight="600" fill="var(--blue-light)">City Pop 复兴</text>
+  <text x="403" y="941" text-anchor="middle" font-size="11" fill="var(--blue)" opacity=".85">藤井風 · Vaundy · iri</text>
+  <text x="403" y="956" text-anchor="middle" font-size="11" fill="var(--blue)" opacity=".65">2019– YouTube 病毒传播</text>
+</g>
+<g class="node-group" data-id="hyperpopjp">
+  <rect class="nr" x="548" y="900" width="162" height="74" rx="9" fill="var(--pink-dim)" stroke="var(--pink)" stroke-width="1"/>
+  <text x="629" y="922" text-anchor="middle" font-size="14" font-weight="600" fill="var(--pink-light)">日本新世代 / Hyperpop</text>
+  <text x="629" y="941" text-anchor="middle" font-size="11" fill="var(--pink)" opacity=".85">YOASOBI · ずっと真夜中</text>
+  <text x="629" y="956" text-anchor="middle" font-size="11" fill="var(--pink)" opacity=".65">ATARASHII GAKKO!</text>
+</g>
+<g class="node-group" data-id="jazzjpmodern">
+  <rect class="nr" x="762" y="906" width="162" height="62" rx="9" fill="var(--teal-dim)" stroke="var(--teal)" stroke-width="1"/>
+  <text x="843" y="932" text-anchor="middle" font-size="13" font-weight="500" fill="var(--teal-light)">当代日本爵士</text>
+  <text x="843" y="950" text-anchor="middle" font-size="11" fill="var(--teal)" opacity=".75">上原ひろみ · 小曽根真</text>
+</g>
+
+<!-- R9: Global — 改为 slate 深蓝色 -->
+<g class="node-group" data-id="global">
+  <rect class="nr" x="246" y="1014" width="520" height="50" rx="9" fill="rgba(42,72,112,0.1)" stroke="rgba(42,72,112,0.3)" stroke-width="1"/>
+  <text x="506" y="1045" text-anchor="middle" font-size="12.5" font-weight="400" fill="#1a3050">全球流媒体 · 算法推荐跨越边界 · TikTok / YouTube 重新发现</text>
+</g>
+
+<!-- ===== ARROWS ===== -->
+
+<!-- Africa -> Blues, Gospel -->
+<path d="M456 74 L305 118" fill="none" stroke="rgba(90,110,24,0.5)" stroke-width="1.1" marker-end="url(#a)"/>
+<path d="M528 74 L650 124" fill="none" stroke="rgba(90,110,24,0.5)" stroke-width="1.1" marker-end="url(#a)"/>
+
+<!-- Blues -> R&B -->
+<path d="M260 192 L260 224" fill="none" stroke="var(--purple)" stroke-width="1.5" marker-end="url(#a)"/>
+<!-- Blues -> Jazz -->
+<path d="M334 162 L780 250" fill="none" stroke="var(--teal)" stroke-width="1.3" marker-end="url(#a)"/>
+<!-- Gospel -> Jazz -->
+<path d="M718 160 L805 224" fill="none" stroke="rgba(122,72,32,0.45)" stroke-width="1" marker-end="url(#a)"/>
+<!-- Gospel -> Soul (dashed) -->
+<path d="M635 172 L278 335" fill="none" stroke="rgba(122,72,32,0.3)" stroke-width="1" stroke-dasharray="6 3" marker-end="url(#a)"/>
+<!-- Ragtime -> Jazz -->
+<path d="M622 263 L782 268" fill="none" stroke="rgba(42,72,112,0.38)" stroke-width="1" marker-end="url(#a)"/>
+
+<!-- R&B -> Soul -->
+<path d="M236 298 L206 335" fill="none" stroke="var(--coral)" stroke-width="1.5" marker-end="url(#a)"/>
+<!-- R&B -> Funk -->
+<path d="M296 278 L370 335" fill="none" stroke="var(--coral)" stroke-width="1.4" marker-end="url(#a)"/>
+<!-- Jazz -> Modal -->
+<path d="M856 298 L826 339" fill="none" stroke="var(--teal)" stroke-width="1.2" stroke-dasharray="6 3" marker-end="url(#a)"/>
+
+<!-- Soul -> Funk -->
+<path d="M292 372 L336 372" fill="none" stroke="var(--coral)" stroke-width="1.5" marker-end="url(#a)"/>
+<!-- Soul -> Neo-Soul (long dashed) -->
+<path d="M216 409 L216 530 Q216 548 330 578" fill="none" stroke="var(--coral)" stroke-width="1.1" stroke-dasharray="7 3" marker-end="url(#a)"/>
+<!-- Funk -> Hip-Hop (sample) -->
+<path d="M368 409 L216 450" fill="none" stroke="var(--amber)" stroke-width="1.5" marker-end="url(#a)"/>
+<!-- Funk -> Disco -->
+<path d="M394 409 L372 456" fill="none" stroke="var(--pink)" stroke-width="1.1" marker-end="url(#a)"/>
+<!-- Funk -> City Pop -->
+<path d="M438 409 L440 566" fill="none" stroke="var(--blue)" stroke-width="1.3" marker-end="url(#a)"/>
+<!-- Modal -> Jazz Fusion -->
+<path d="M790 403 L784 456" fill="none" stroke="var(--teal)" stroke-width="1.2" stroke-dasharray="5 3" marker-end="url(#a)"/>
+
+<!-- Hip-Hop -> Jazz Hip-Hop -->
+<path d="M176 524 L176 566" fill="none" stroke="var(--amber)" stroke-width="1.5" marker-end="url(#a)"/>
+<!-- Jazz -> Jazz Hip-Hop (harmonic sampling, long) -->
+<path d="M820 298 Q820 500 268 578" fill="none" stroke="var(--amber)" stroke-width="1.1" stroke-dasharray="6 3" marker-end="url(#a)"/>
+<!-- Disco -> City Pop (dashed) -->
+<path d="M378 518 L396 566" fill="none" stroke="var(--blue)" stroke-width="1" stroke-dasharray="5 3" marker-end="url(#a)"/>
+<!-- AOR -> City Pop -->
+<path d="M518 518 L468 566" fill="none" stroke="var(--blue)" stroke-width="1.1" marker-end="url(#a)"/>
+<!-- Jazz Fusion -> City Pop -->
+<path d="M694 518 L490 574" fill="none" stroke="var(--teal)" stroke-width="1" stroke-dasharray="6 3" marker-end="url(#a)"/>
+<!-- Jazz -> Smooth Jazz (long) -->
+<path d="M912 298 L870 572" fill="none" stroke="var(--teal)" stroke-width="1" stroke-dasharray="6 4" marker-end="url(#a)"/>
+
+<!-- Jazz Hip-Hop -> Nujabes -->
+<path d="M181 640 L181 678" fill="none" stroke="var(--amber)" stroke-width="1.5" marker-end="url(#a)"/>
+<!-- City Pop -> Shibuya -->
+<path d="M403 640 L403 678" fill="none" stroke="var(--blue)" stroke-width="1.6" marker-end="url(#a)"/>
+<!-- City Pop -> J-R&B -->
+<path d="M484 614 L560 686" fill="none" stroke="var(--pink)" stroke-width="1.2" marker-end="url(#a)"/>
+<!-- Neo-Soul -> J-R&B -->
+<path d="M631 640 L631 678" fill="none" stroke="var(--pink)" stroke-width="1.4" marker-end="url(#a)"/>
+<!-- Smooth Jazz -> Jazz JP Club -->
+<path d="M856 634 L856 796" fill="none" stroke="var(--teal)" stroke-width="1" stroke-dasharray="5 3" marker-end="url(#a)"/>
+<!-- Bossa -> Shibuya -->
+<path d="M820 740 L500 692" fill="none" stroke="rgba(90,110,24,0.42)" stroke-width="1" marker-end="url(#a)"/>
+
+<!-- Nujabes -> J-Hip-Hop -->
+<path d="M181 752 L181 790" fill="none" stroke="var(--amber)" stroke-width="1.5" marker-end="url(#a)"/>
+<!-- Shibuya -> Jazz-JP -->
+<path d="M403 752 L403 790" fill="none" stroke="var(--teal)" stroke-width="1.4" marker-end="url(#a)"/>
+<!-- Shibuya -> Techno-pop -->
+<path d="M468 736 L570 798" fill="none" stroke="var(--pink)" stroke-width="1.2" marker-end="url(#a)"/>
+<!-- J-R&B -> Techno-pop -->
+<path d="M629 752 L629 790" fill="none" stroke="var(--pink)" stroke-width="1.3" marker-end="url(#a)"/>
+<!-- Jazz JP Club -> Modern JP Jazz -->
+<path d="M843 858 L843 906" fill="none" stroke="var(--teal)" stroke-width="1.2" marker-end="url(#a)"/>
+
+<!-- J-Hip-Hop -> Lo-fi -->
+<path d="M181 864 L181 900" fill="none" stroke="var(--amber)" stroke-width="1.4" marker-end="url(#a)"/>
+<!-- Jazz-JP -> City Pop Revival -->
+<path d="M403 864 L403 900" fill="none" stroke="var(--blue)" stroke-width="1.4" marker-end="url(#a)"/>
+<!-- Techno-pop -> Hyperpop-JP -->
+<path d="M629 864 L629 900" fill="none" stroke="var(--pink)" stroke-width="1.4" marker-end="url(#a)"/>
+<!-- City Pop -> City Pop Revival (dashed arc) -->
+<path d="M494 628 Q960 640 960 870 L502 968" fill="none" stroke="var(--blue)" stroke-width="1" stroke-dasharray="6 4" marker-end="url(#a)"/>
+
+<!-- -> Global -->
+<path d="M240 960 L370 1014" fill="none" stroke="rgba(42,72,112,0.3)" stroke-width="1" marker-end="url(#a)"/>
+<path d="M403 974 L450 1014" fill="none" stroke="rgba(42,72,112,0.3)" stroke-width="1" marker-end="url(#a)"/>
+<path d="M629 974 L570 1014" fill="none" stroke="rgba(42,72,112,0.3)" stroke-width="1" marker-end="url(#a)"/>
+
+</svg>
+</div>
+
+<div class="legend">
+  <div class="li"><div class="ll" style="background:var(--purple)"></div><span>Blues / R&B 主干</span></div>
+  <div class="li"><div class="ll" style="background:var(--teal)"></div><span>Jazz 脉络</span></div>
+  <div class="li"><div class="ll" style="background:var(--coral)"></div><span>Soul / Funk 演变</span></div>
+  <div class="li"><div class="ll" style="background:var(--amber)"></div><span>Hip-Hop 谱系</span></div>
+  <div class="li"><div class="ll" style="background:var(--blue)"></div><span>日本城市流行</span></div>
+  <div class="li"><div class="ll" style="background:var(--pink)"></div><span>日本现代流行</span></div>
+  <div class="li"><div class="ll d" style="color:var(--teal)"></div><span>和声 / 风格渗透（虚线）</span></div>
+  <div class="li"><div class="ll" style="background:var(--olive)"></div><span>根源 / 世界音乐</span></div>
+</div>
+
+<div class="tooltip" id="tt"></div>
+
+<script>
+const D = {
+  africa: { n:"非洲音乐传统", e:"远古 — 19世纪", d:"以复杂多声部节奏与呼唤-回应（Call & Response）结构为核心。经由跨大西洋奴隶贸易传入美洲，成为所有黑人音乐的基因底层。", a:"" },
+  blues: { n:"Blues 蓝调", e:"19世纪末 · 密西西比三角洲", d:"源自田间劳动歌曲与非裔灵歌，以12小节进行、蓝调音阶和喊唱哭腔为核心。是此后所有流派最直接的共同祖先。", a:"Robert Johnson · Bessie Smith · Muddy Waters · B.B. King" },
+  gospel: { n:"Gospel & 劳动歌曲", e:"19世纪 · 黑人教会", d:"非裔美国人教会中的圣歌传统，将非洲节奏与基督教情感融合。是Soul最直接的精神源头。", a:"Mahalia Jackson · Sister Rosetta Tharpe" },
+  jazz: { n:"Jazz 爵士乐", e:"1900s–1930s · 新奥尔良→纽约", d:"融合Blues、Ragtime与欧洲和声，以高度即兴、丰富色彩化和声为特征。二战后分化为Bebop、Cool Jazz、Modal、Free Jazz等流派。", a:"Louis Armstrong · Miles Davis · John Coltrane · Bill Evans · Charlie Parker" },
+  rnb: { n:"R&B 节奏蓝调", e:"1940s–1950s · 北方城市", d:"Blues电气化+节拍强化后的城市版本。二战后随非裔美国人北迁而生，是唱片公司将'Race Music'重新命名的产物。", a:"Ray Charles · Ruth Brown · Bo Diddley · Fats Domino" },
+  ragtime: { n:"Ragtime 散拍", e:"1890s–1910s", d:"欧洲古典和声与非洲切分节奏的结合产物，是Jazz的重要前身之一，提供了复杂的和弦行进逻辑。", a:"Scott Joplin" },
+  soul: { n:"Soul 灵魂乐", e:"1950s末–1970s · Memphis & Motown", d:"R&B与Gospel深度融合，与民权运动紧密相连。孟菲斯（Stax）和底特律（Motown）是两大中心，情感表达强烈，声乐技巧要求极高。", a:"Aretha Franklin · Otis Redding · Sam Cooke · Marvin Gaye · Stevie Wonder" },
+  funk: { n:"Funk 放克", e:"1960s末–1970s", d:"从Soul内部裂变，James Brown将节拍极度强化（The One拍）、和声简化为持续七和弦、每件乐器作为节奏单元运作。Slap Bass与Wah吉他成为标志音色。", a:"James Brown · Parliament-Funkadelic · Sly & The Family Stone · Ohio Players" },
+  jazzmodal: { n:"Modal / Free Jazz", e:"1950s末–1970s", d:"Modal Jazz（Miles Davis《Kind of Blue》）抛弃快速和弦进行转向调式即兴；Free Jazz（Ornette Coleman）进一步解除调性与节奏约束。", a:"Miles Davis · John Coltrane · Ornette Coleman · Cecil Taylor" },
+  hiphop: { n:"Hip-Hop", e:"1970s末 · 南布朗克斯", d:"诞生于纽约南布朗克斯贫困社区，以采样（Sampling）Funk/Soul唱片为核心技术，配合MC说唱、DJ打碟、涂鸦与霹雳舞四大要素。", a:"DJ Kool Herc · Grandmaster Flash · Run-DMC · Public Enemy · Nas · Jay-Z" },
+  disco: { n:"Disco", e:"1970s · 纽约夜店", d:"从Funk和Soul提炼出最适合舞池的元素，加入弦乐编曲和稳定四四拍踩镲。与LGBTQ+文化深度绑定，催生了House和Techno，并通过Disco八拍律动间接影响City Pop编曲。", a:"Donna Summer · Chic · Giorgio Moroder · Gloria Gaynor" },
+  aor: { n:"AOR / Soft Rock", e:"1970s–1980s", d:"成人向取向摇滚，精良的录音室制作、柔和旋律感与适度爵士和声。Steely Dan的多轨录音美学和Boz Scaggs的都市情调对City Pop编曲影响极大。", a:"Steely Dan · Boz Scaggs · Michael McDonald · Christopher Cross" },
+  jazzfusion: { n:"Jazz Fusion", e:"1970s", d:"Jazz与Rock、Funk的混合，大量使用电子乐器和强劲节拍。CTI唱片公司的光滑质感尤其影响了日本City Pop制作人对电钢琴音色的品味。", a:"Weather Report · Return to Forever · Herbie Hancock · Bob James" },
+  jazzhiphop: { n:"Jazz Hip-Hop", e:"1990s初 · 纽约", d:"将爵士唱片采样与Hip-Hop节拍结合，创造更复杂的和声背景。A Tribe Called Quest用爵士采样重新定义了说唱音乐的质感，直接影响Nujabes。", a:"A Tribe Called Quest · Gang Starr · Pete Rock & CL Smooth · De La Soul · Digable Planets" },
+  citypop: { n:"City Pop 城市流行", e:"1978–1989 · 日本东京", d:"日本泡沫经济时代的产物，将R&B律动、Funk质感、Jazz和声与AOR精良制作融合，描绘都市中产休闲生活。2019年后在YouTube算法推动下在全球掀起复兴热潮。", a:"山下達郎 · 竹内まりや · 大滝詠一 · 松原みき · 杏里 · 亜蘭知子" },
+  neosoul: { n:"Neo-Soul", e:"1990s中 · 美国", d:"1990s对Soul传统的复兴与更新，融入Hip-Hop节拍、Jazz和声与现代R&B制作美学。对2000s日本J-Soul浪潮影响深远。", a:"Erykah Badu · D'Angelo · Lauryn Hill · Maxwell · Jill Scott" },
+  smoothjazz: { n:"Smooth Jazz", e:"1980s–1990s", d:"Jazz的商业化流行分支，保留流畅旋律与轻柔节奏，去除即兴挑战性。在日本形成了独特的'BGM爵士'文化土壤。", a:"George Benson · Kenny G · Bob James · Spyro Gyra" },
+  nujabes: { n:"Nujabes / 日本 Lo-fi", e:"1990s末–2000s · 东京", d:"DJ兼制作人Nujabes将Jazz Hip-Hop美学彻底日本化，以细腻的爵士采样创造出冥想性质的节拍音乐。2010年逝世后，其遗产直接催生了全球Lo-fi Hip-Hop Beats文化。", a:"Nujabes · DJ Okawari · 保刈久明（Samurai Champloo OST）· Fat Jon" },
+  shibuya: { n:"涩谷系 Shibuya-kei", e:"1990s初–2000s · 东京涩谷", d:"发源于涩谷唱片店文化圈的后现代拼贴风格，以博学的'唱片挖掘'精神引用法国香颂、Bossa Nova、Exotica等大量西方冷门素材。", a:"Pizzicato Five · Cornelius · Kahimi Karie · Flipper's Guitar · Original Love" },
+  jrnb: { n:"J-Soul / J-R&B", e:"1998–2000s · 日本", d:"美国Neo-Soul与R&B在1990s末传入日本后，与J-Pop制作工业结合的产物。宇多田ヒカル1998年出道彻底改写了J-Pop格局。", a:"宇多田ヒカル · MISIA · 倉木麻衣 · AI · Superfly · Juju" },
+  bossanova: { n:"Bossa Nova & 世界音乐", e:"1950s–1960s · 巴西/法国", d:"巴西的温柔节奏与法国香颂的精致氛围是涩谷系最重要的非美洲养分。João Gilberto的轻抚和弦方式与Gainsbourg的极简冷淡感被涩谷系奉为圭臬。", a:"João Gilberto · Astrud Gilberto · Serge Gainsbourg · Caetano Veloso" },
+  jhiphop: { n:"日本 Hip-Hop", e:"2000s–今 · 日本", d:"从模仿美国到建立本土美学，日本Hip-Hop逐渐发展出独特风格。2010s后'封闭花园'世代（KOHH、舐達麻）以街头真实性取代偶像包装。", a:"KOHH · 舐達麻 · KID FRESINO · BIM · Salu · 般若 · ZORN" },
+  jazzpopjp: { n:"日本爵士 / 前卫流行", e:"1970s–1980s", d:"City Pop与涩谷系孕育出的日本独有爵士语境。坂本龍一代表了将电子音乐与爵士和声结合的前卫路线，Yellow Magic Orchestra则开创了合成器流行的日本范式。", a:"坂本龍一 · 大貫妙子 · Yellow Magic Orchestra · 高中正義 · 渡辺貞夫" },
+  technopop: { n:"テクノポップ / 日本電音", e:"2000s–今 · 日本", d:"涩谷系的后现代精神延伸到电子舞曲领域。中田ヤスタカ为代表，将精密合成器编程与J-Pop旋律结合，Perfume和capsule创造了独一无二的'人声机械化'美学。", a:"Perfume · capsule · きゃりーぱみゅぱみゅ · 電気グルーヴ" },
+  jazzjpclub: { n:"日本爵士现场文化", e:"1970s–今", d:"日本是美国以外最重要的爵士乐消费市场，拥有密度极高的爵士现场文化。Blue Note Tokyo等演出场所维系了爵士在大众文化中的持续存在。", a:"" },
+  lofi: { n:"Lo-fi / Chill Beats", e:"2010s–今 · 全球", d:"以Nujabes精神为核心，借助YouTube'Lo-fi Hip-Hop Radio'格式全球扩散，形成供学习/工作背景聆听的全球亚文化。日本动漫美学成为这一文化的视觉标志。", a:"ChilledCow · college music · j'san · Idealism" },
+  citypoprevival: { n:"City Pop 复兴", e:"2019–今", d:"YouTube算法将竹内まりや《Plastic Love》等1980s作品推送给全球听众，引发跨越语言的City Pop热潮。新生代艺人将这种美学更新为当代J-Pop。", a:"藤井風 · Vaundy · iri · Maya Hatch · Tofubeats · 折坂悠太" },
+  hyperpopjp: { n:"日本新世代 / Hyperpop", e:"2010s–今", d:"从テクノポップ与涩谷系DNA出发，融合西方Hyperpop的声音极端性和互联网文化。YOASOBI以'小说→音乐'的转化概念打破传统J-Pop创作模式。", a:"YOASOBI · ずっと真夜中でいいのに · ATARASHII GAKKO! · Ado · 米津玄師" },
+  jazzjpmodern: { n:"当代日本爵士", e:"2000s–今", d:"在国际爵士语境中发展出鲜明个人风格的日本演奏家。上原ひろみ以超技术演奏和跨界融合享誉全球，代表了日本爵士在继承传统基础上的独立创新能力。", a:"上原ひろみ · 小曽根真 · 渡辺貞夫 · 日野皓正 · 菊地成孔" },
+  global: { n:"全球流媒体时代", e:"2015–今", d:"Spotify、YouTube、TikTok的算法推荐彻底打破音乐的地域和时代边界。City Pop、Lo-fi、J-Soul在全球青少年中同步传播，日本音乐第一次真正意义上成为全球流行的有机组成部分。", a:"" }
+};
+
+const tt = document.getElementById('tt');
+let ht;
+document.querySelectorAll('.node-group').forEach(g => {
+  g.addEventListener('mouseenter', e => {
+    const inf = D[g.dataset.id]; if (!inf) return;
+    clearTimeout(ht);
+    tt.innerHTML = `<h3>${inf.n}</h3><div class="et">${inf.e}</div><p>${inf.d}</p>${inf.a ? `<div class="ar">${inf.a}</div>` : ''}`;
+    tt.classList.add('vis');
+    pos(e);
+  });
+  g.addEventListener('mousemove', pos);
+  g.addEventListener('mouseleave', () => { ht = setTimeout(() => tt.classList.remove('vis'), 140); });
+});
+function pos(e) {
+  const w=296, h=170, x0=e.clientX+16, y0=e.clientY+16;
+  tt.style.left = (x0+w>window.innerWidth-8 ? e.clientX-w-16 : x0)+'px';
+  tt.style.top = (y0+h>window.innerHeight-8 ? e.clientY-h-16 : y0)+'px';
+}
+</script>
+</body>
+</html>
