@@ -8,6 +8,9 @@
 打开 **PowerShell（管理员）**，运行：
 ```powershell
 C:\Users\Administrator\quartz\sync.ps1
+
+# 更新记忆
+& "C:\Users\Administrator\quartz\snapshot-memory.ps1"
 ```
 等出现 `done!` 后，约 1-2 分钟网站自动更新。
 再用 `Ctrl + Shift + R` 强制刷新，就能看到最新内容了。
