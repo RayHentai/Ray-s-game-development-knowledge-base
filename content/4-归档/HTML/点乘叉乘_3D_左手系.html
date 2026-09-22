@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>点乘 · 叉乘（3D · Unity 左手系）</title>
+<style>
+  :root{
+    --paper:#EDF0F5; --ink:#182031; --ink-soft:#55627A; --line:#D3DAE5;
+    --a:#F5B23D; --b:#34D6C6; --c:#B57BEE;
+    --dot-ac:#E7962A; --cross-ac:#9B6BE0;
+    --mono:"SF Mono","JetBrains Mono","Consolas","Roboto Mono",ui-monospace,monospace;
+    --sans:"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Source Han Sans SC","Noto Sans CJK SC",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;}
+  body{background:var(--paper);color:var(--ink);font-family:var(--sans);line-height:1.6;
+    -webkit-font-smoothing:antialiased;padding:26px 20px 56px;}
+  .wrap{max-width:1100px;margin:0 auto;}
+  header{margin-bottom:20px;}
+  h1{font-size:24px;font-weight:650;letter-spacing:.3px;margin:0 0 6px;}
+  h1 .op{color:var(--ink-soft);font-weight:400;padding:0 .28em;}
+  h1 .tag3d{font-size:14px;color:var(--ink-soft);font-weight:400;}
+  .sub{color:var(--ink-soft);font-size:14px;margin:0;max-width:66ch;}
+
+  .stage{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:22px;align-items:start;}
+  @media(max-width:860px){.stage{grid-template-columns:1fr;}}
+
+  .plane-wrap{background:#0E1524;border-radius:14px;padding:12px;border:1px solid #223049;}
+  .canvas-box{position:relative;width:100%;aspect-ratio:1/1;}
+  canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab;border-radius:6px;}
+  canvas:active{cursor:grabbing;}
+  .axhint{color:rgba(255,255,255,.55);font-size:12px;margin:10px 4px 2px;display:flex;gap:14px;flex-wrap:wrap;align-items:center;}
+  .k{display:inline-flex;align-items:center;gap:5px;}
+  .sw{width:11px;height:11px;border-radius:2px;display:inline-block;}
+  .sw.rd{border-radius:50%;}
+
+  .panel{display:flex;flex-direction:column;gap:13px;}
+  .seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff;}
+  .seg button{flex:1;appearance:none;border:0;background:transparent;padding:8px 4px;font-family:var(--sans);
+    font-size:13.5px;color:var(--ink-soft);cursor:pointer;border-right:1px solid var(--line);transition:.12s;}
+  .seg button:last-child{border-right:0;}
+  .seg button:hover{background:#F4F6FA;color:var(--ink);}
+  .seg button.on{background:var(--ink);color:#fff;}
+  .seg button:focus-visible{outline:2px solid var(--b);outline-offset:-2px;}
+
+  .vecblock{background:#fff;border:1px solid var(--line);border-radius:11px;padding:11px 13px;}
+  .vecblock .row{display:flex;align-items:center;gap:9px;margin:5px 0;}
+  .vecblock .lab{width:64px;font-size:12.5px;color:var(--ink-soft);display:flex;align-items:center;gap:6px;flex-shrink:0;}
+  .vecblock input[type=range]{flex:1;accent-color:var(--dot-ac);height:3px;}
+  .vecblock.bvec input[type=range]{accent-color:#1FA99B;}
+  .vecblock .num{width:42px;text-align:right;font-family:var(--mono);font-size:13px;}
+  .vhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;}
+  .vhead .nm{font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px;}
+  .vhead .co{font-family:var(--mono);font-size:12.5px;color:var(--ink-soft);}
+
+  .presets{display:flex;gap:6px;flex-wrap:wrap;}
+  .presets button{appearance:none;border:1px solid var(--line);background:#fff;border-radius:8px;
+    padding:5px 9px;font-size:12px;font-family:var(--sans);color:var(--ink);cursor:pointer;transition:.12s;}
+  .presets button:hover{background:#F4F6FA;border-color:#B9C3D4;}
+  .presets button:focus-visible{outline:2px solid var(--b);outline-offset:1px;}
+
+  .calc{border:1px solid var(--line);border-radius:11px;background:#fff;overflow:hidden;}
+  .calc .block{padding:11px 13px;}
+  .calc .block+.block{border-top:1px solid var(--line);}
+  .calc .block.dotb{box-shadow:inset 3px 0 0 var(--dot-ac);}
+  .calc .block.crossb{box-shadow:inset 3px 0 0 var(--cross-ac);}
+  .calc .head{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;}
+  .calc .head .t{font-size:13px;font-weight:600;}
+  .calc .head .t .en{color:var(--ink-soft);font-weight:400;font-family:var(--mono);font-size:11.5px;margin-left:4px;}
+  .calc .head .rt{font-size:11px;color:var(--ink-soft);text-align:right;max-width:150px;}
+  .calc .expr{font-family:var(--mono);font-size:12px;color:var(--ink-soft);word-break:break-word;line-height:1.7;}
+  .calc .expr .res{color:var(--ink);font-weight:600;font-size:14px;}
+  .verdict{margin-top:6px;font-size:12.5px;}
+  .pill{font-family:var(--mono);font-size:11.5px;padding:1px 7px;border-radius:20px;border:1px solid currentColor;}
+  .pill.f{color:var(--dot-ac);} .pill.s{color:var(--cross-ac);}
+  .meta{font-family:var(--mono);font-size:12px;color:var(--ink-soft);display:flex;justify-content:space-between;padding:0 2px;}
+
+  .ref{margin-top:38px;display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  @media(max-width:860px){.ref{grid-template-columns:1fr;}}
+  .card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px 18px;}
+  .card h2{font-size:15.5px;font-weight:620;margin:0 0 9px;}
+  .card p{font-size:13.5px;margin:0 0 8px;}
+  .card .g{color:var(--dot-ac);font-weight:600;} .card .r{color:var(--cross-ac);font-weight:600;}
+  code{font-family:var(--mono);font-size:12.5px;background:#EEF1F6;padding:1px 5px;border-radius:4px;}
+  .note{grid-column:1/-1;background:#fff;border:1px solid var(--line);border-left:3px solid var(--b);
+    border-radius:10px;padding:14px 18px;font-size:13.5px;}
+  .note strong{color:#128a7d;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>点乘<span class="op">·</span>叉乘 <span class="tag3d">3D · Unity 左手系（+X 右　+Y 上　+Z 前/进屏幕）</span></h1>
+    <p class="sub">拖动画布旋转视角。用滑杆调 A、B 两个三维向量，右侧实时显示点乘、叉乘的<strong>数值</strong>与<strong>几何意义</strong>：点乘 = B 在 A 上的投影（沿 A 的那段）；叉乘 = A、B 张成的平行四边形的法线（长度 = 面积，方向按左手定则）。</p>
+  </header>
+
+  <div class="stage">
+    <div class="plane-wrap">
+      <div class="canvas-box"><canvas id="cv"></canvas></div>
+      <div class="axhint">
+        <span class="k"><span class="sw" style="background:#E5663B"></span>X</span>
+        <span class="k"><span class="sw" style="background:#5FB56A"></span>Y</span>
+        <span class="k"><span class="sw" style="background:#4C7BE0"></span>Z</span>
+        <span class="k"><span class="sw rd" style="background:var(--a)"></span>A</span>
+        <span class="k"><span class="sw rd" style="background:var(--b)"></span>B</span>
+        <span class="k"><span class="sw rd" style="background:var(--c)"></span>A×B（法线）</span>
+        <span style="opacity:.7">· 拖动旋转 · 滚轮缩放</span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="seg" role="group" aria-label="显示内容">
+        <button id="m-dot" aria-pressed="false">点乘投影</button>
+        <button id="m-cross" aria-pressed="false">叉乘平行四边形</button>
+        <button id="m-both" class="on" aria-pressed="true">都显示</button>
+      </div>
+
+      <div class="vecblock avec">
+        <div class="vhead"><span class="nm"><span class="sw rd" style="background:var(--a)"></span>向量 A</span><span class="co" id="coA">(3.0, 0.0, 1.5)</span></div>
+        <div class="row"><span class="lab">A.x</span><input type="range" id="ax" min="-5" max="5" step="0.5" value="3"><span class="num" id="nax">3.0</span></div>
+        <div class="row"><span class="lab">A.y</span><input type="range" id="ay" min="-5" max="5" step="0.5" value="0"><span class="num" id="nay">0.0</span></div>
+        <div class="row"><span class="lab">A.z</span><input type="range" id="az" min="-5" max="5" step="0.5" value="1.5"><span class="num" id="naz">1.5</span></div>
+      </div>
+
+      <div class="vecblock bvec">
+        <div class="vhead"><span class="nm"><span class="sw rd" style="background:var(--b)"></span>向量 B</span><span class="co" id="coB">(1.0, 2.5, 1.0)</span></div>
+        <div class="row"><span class="lab">B.x</span><input type="range" id="bx" min="-5" max="5" step="0.5" value="1"><span class="num" id="nbx">1.0</span></div>
+        <div class="row"><span class="lab">B.y</span><input type="range" id="by" min="-5" max="5" step="0.5" value="2.5"><span class="num" id="nby">2.5</span></div>
+        <div class="row"><span class="lab">B.z</span><input type="range" id="bz" min="-5" max="5" step="0.5" value="1"><span class="num" id="nbz">1.0</span></div>
+      </div>
+
+      <div class="presets">
+        <button data-p="perp">A⊥B（点乘=0）</button>
+        <button data-p="para">B∥A（叉乘=0）</button>
+        <button data-p="ground">敌人在右(Unity)</button>
+        <button data-p="reset">复位</button>
+      </div>
+
+      <div class="calc">
+        <div class="block dotb" id="blkDot">
+          <div class="head"><span class="t">点乘<span class="en">Dot → 标量</span></span><span class="rt">= |A||B|cosθ · 看符号定夹角</span></div>
+          <div class="expr" id="exprDot"></div>
+          <div class="verdict" id="vDot"></div>
+        </div>
+        <div class="block crossb" id="blkCross">
+          <div class="head"><span class="t">叉乘<span class="en">Cross → 向量</span></span><span class="rt">垂直A、B · |结果|=平行四边形面积</span></div>
+          <div class="expr" id="exprCross"></div>
+          <div class="verdict" id="vCross"></div>
+        </div>
+      </div>
+
+      <div class="meta"><span>|A| <span id="mA">3.4</span>　|B| <span id="mB">2.9</span></span><span>夹角 θ <span id="mAng">62°</span></span></div>
+    </div>
+  </div>
+
+  <div class="ref">
+    <div class="card">
+      <h2>点乘的几何意义</h2>
+      <p><span class="g">结果是一个数</span>：<code>Ax·Bx + Ay·By + Az·Bz = |A||B|cosθ</code>。</p>
+      <p>几何上 = <strong>B 在 A 方向上的投影长度</strong>（<code>|B|cosθ</code>）× <code>|A|</code>。图里沿 A 的那段亮色就是投影，虚线是 B 到它的垂足。</p>
+      <p>符号看夹角：<span class="g">&gt;0</span> 夹角&lt;90°（投影与 A 同向）；<span class="g">=0</span> 垂直（投影为 0）；<span class="g">&lt;0</span> 夹角&gt;90°（投影反向）。</p>
+    </div>
+    <div class="card">
+      <h2>叉乘的几何意义</h2>
+      <p><span class="r">结果是一个向量</span>：<code>(Ay·Bz−Az·By, Az·Bx−Ax·Bz, Ax·By−Ay·Bx)</code>。</p>
+      <p>方向<strong>垂直于 A、B 张成的平面</strong>（就是那个平面的法线）；长度 = <strong>平行四边形面积</strong> = <code>|A||B|sinθ</code>。图里紫色箭头就是它，紫色面片是那个平行四边形。</p>
+      <p>方向按<strong>左手定则</strong>（Unity 是左手系）；<span class="r">叉乘=0</span> 时 A、B 共线（面积塌成 0）。</p>
+    </div>
+    <div class="note">
+      <strong>把之前 2D 工具的符号疑问在这里钉死。</strong> 在 Unity 真实帧里（角色 <code>forward=+Z</code>、右手边=<code>+X</code>）：<code>Vector3.Cross(forward, 指向敌人).y &gt; 0 ⟺ 敌人在你右边</code>（点「敌人在右(Unity)」预设看）。而之前那个「屏幕俯视 2D」小工具里右侧对应的是<em>负</em>号——不是矛盾，是两个工具的坐标约定不同（那个用屏幕向上为 +y）。这正是为什么说：<strong>叉乘判左右，方向公式能推、但符号以你项目的实际帧为准，拿已知在右的物体实测一次钉死。</strong>点乘的前后（cos 符号）不受这些影响。
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const cv=document.getElementById('cv'), ctx=cv.getContext('2d');
+  let W=0,H=0,cx=0,cy=0,unit=40,dpr=1;
+  let yaw=-0.7, pitch=0.42, camDist=9;
+  const focal=9;
+  let mode='both';
+
+  // colors (canvas 用字面值，不用 CSS 变量)
+  const C={
+    x:'#E5663B', y:'#5FB56A', z:'#4C7BE0',
+    xf:'rgba(229,102,59,.28)', yf:'rgba(95,181,106,.28)', zf:'rgba(76,123,224,.28)',
+    a:'#F5B23D', b:'#34D6C6', cross:'#B57BEE',
+    grid:'rgba(255,255,255,.07)',
+    paraFill:'rgba(181,123,238,.16)', paraEdge:'rgba(181,123,238,.55)',
+    proj:'rgba(245,178,61,.9)', projDash:'rgba(255,255,255,.4)',
+    arc:'rgba(255,255,255,.5)', ink:'#0B1220'
+  };
+
+  // ---- vector state ----
+  const A={x:3,y:0,z:1.5}, B={x:1,y:2.5,z:1};
+
+  // ---- sizing ----
+  function resize(){
+    const r=cv.getBoundingClientRect(); dpr=window.devicePixelRatio||1;
+    W=r.width;H=r.height; cv.width=Math.round(W*dpr); cv.height=Math.round(H*dpr);
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    cx=W/2; cy=H/2; unit=Math.min(W,H)/2/6.5; draw();
+  }
+  new ResizeObserver(resize).observe(cv);
+
+  // ---- 3D projection (left-handed: +X right, +Y up, +Z into screen) ----
+  function S(p){
+    const cyv=Math.cos(yaw), syv=Math.sin(yaw), cpv=Math.cos(pitch), spv=Math.sin(pitch);
+    let x1=p.x*cyv + p.z*syv, y1=p.y, z1=-p.x*syv + p.z*cyv;
+    let x2=x1, y2=y1*cpv - z1*spv, z2=y1*spv + z1*cpv;
+    const depth=z2+camDist, s=focal/Math.max(depth,0.1)*unit;
+    return {x:cx + x2*s, y:cy - y2*s, z:depth};
+  }
+  const V=(x,y,z)=>({x,y,z});
+  const add=(p,q)=>V(p.x+q.x,p.y+q.y,p.z+q.z);
+  const scale=(p,s)=>V(p.x*s,p.y*s,p.z*s);
+  const len=p=>Math.hypot(p.x,p.y,p.z);
+
+  // ---- draw prims ----
+  function line3(p,q,color,w,dash){
+    const a=S(p),b=S(q); ctx.save();
+    ctx.strokeStyle=color; ctx.lineWidth=w; if(dash)ctx.setLineDash(dash);
+    ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke(); ctx.restore();
+  }
+  function arrow3(p,q,color,w,glow){
+    const a=S(p),b=S(q); const ang=Math.atan2(b.y-a.y,b.x-a.x), head=Math.max(9,w*3.2);
+    ctx.save(); ctx.strokeStyle=color; ctx.fillStyle=color; ctx.lineWidth=w; ctx.lineCap='round'; ctx.lineJoin='round';
+    if(glow){ctx.shadowColor=color;ctx.shadowBlur=8;}
+    ctx.beginPath(); ctx.moveTo(a.x,a.y);
+    ctx.lineTo(b.x-Math.cos(ang)*head*0.6,b.y-Math.sin(ang)*head*0.6); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(b.x,b.y);
+    ctx.lineTo(b.x-Math.cos(ang-0.42)*head,b.y-Math.sin(ang-0.42)*head);
+    ctx.lineTo(b.x-Math.cos(ang+0.42)*head,b.y-Math.sin(ang+0.42)*head);
+    ctx.closePath(); ctx.fill(); ctx.restore();
+  }
+  function poly3(pts,fill,edge){
+    ctx.save(); ctx.beginPath();
+    pts.forEach((p,i)=>{const s=S(p); i?ctx.lineTo(s.x,s.y):ctx.moveTo(s.x,s.y);});
+    ctx.closePath();
+    if(fill){ctx.fillStyle=fill;ctx.fill();}
+    if(edge){ctx.strokeStyle=edge;ctx.lineWidth=1.4;ctx.setLineDash([5,4]);ctx.stroke();}
+    ctx.restore();
+  }
+  function dot3(p,color,r){const s=S(p);ctx.save();ctx.fillStyle=color;ctx.beginPath();ctx.arc(s.x,s.y,r,0,7);ctx.fill();ctx.restore();}
+  function text3(p,txt,color,size,dx,dy){
+    const s=S(p); ctx.save(); ctx.fillStyle=color;
+    ctx.font='600 '+(size||12)+'px '+getComputedStyle(document.body).fontFamily;
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(txt,s.x+(dx||0),s.y+(dy||0)); ctx.restore();
+  }
+
+  // ---- ground grid on XZ (y=0) ----
+  function grid(){
+    for(let i=-5;i<=5;i++){
+      line3(V(i,0,-5),V(i,0,5),C.grid,1);
+      line3(V(-5,0,i),V(5,0,i),C.grid,1);
+    }
+  }
+  function axes(){
+    const L=5.4;
+    // negative faint
+    line3(V(-L,0,0),V(0,0,0),C.xf,1.4); line3(V(0,-L,0),V(0,0,0),C.yf,1.4); line3(V(0,0,-L),V(0,0,0),C.zf,1.4);
+    // positive bright with arrows + labels
+    arrow3(V(0,0,0),V(L,0,0),C.x,2); text3(V(L,0,0),'X',C.x,13,10,-2);
+    arrow3(V(0,0,0),V(0,L,0),C.y,2); text3(V(0,L,0),'Y',C.y,13,0,-12);
+    arrow3(V(0,0,0),V(0,0,L),C.z,2); text3(V(0,0,L),'Z',C.z,13,10,-2);
+  }
+
+  // ---- arc between A and B ----
+  function angleArc(){
+    const la=len(A), lb=len(B); if(la<1e-4||lb<1e-4) return;
+    const ah=scale(A,1/la), bh=scale(B,1/lb);
+    const r=1.15, N=26; ctx.save(); ctx.strokeStyle=C.arc; ctx.lineWidth=1.4; ctx.beginPath();
+    for(let i=0;i<=N;i++){
+      const t=i/N;
+      let d=V(ah.x+(bh.x-ah.x)*t, ah.y+(bh.y-ah.y)*t, ah.z+(bh.z-ah.z)*t);
+      const dl=len(d)||1; d=scale(d,r/dl); const s=S(d);
+      i?ctx.lineTo(s.x,s.y):ctx.moveTo(s.x,s.y);
+    }
+    ctx.stroke(); ctx.restore();
+  }
+
+  // ---- cross product ----
+  function cross(a,b){return V(a.y*b.z-a.z*b.y, a.z*b.x-a.x*b.z, a.x*b.y-a.y*b.x);}
+  function dotp(a,b){return a.x*b.x+a.y*b.y+a.z*b.z;}
+
+  function draw(){
+    if(!W) return; ctx.clearRect(0,0,W,H);
+    grid(); axes();
+
+    const d=dotp(A,B), Cv=cross(A,B), la=len(A), lb=len(B), lc=len(Cv);
+
+    // ---- cross: parallelogram + normal ----
+    if(mode==='cross'||mode==='both'){
+      if(la>1e-3 && lb>1e-3){
+        poly3([V(0,0,0),A,add(A,B),B], C.paraFill, C.paraEdge);
+      }
+      if(lc>1e-3){
+        const Ldraw=Math.min(lc,4.5), Cd=scale(Cv,Ldraw/lc);
+        arrow3(V(0,0,0),Cd,C.cross,2.6,true);
+        text3(Cd,'A×B',C.cross,12,12,-4);
+      }
+    }
+
+    // ---- dot: projection of B onto A ----
+    if((mode==='dot'||mode==='both') && la>1e-3){
+      const ah=scale(A,1/la), projLen=d/la, foot=scale(ah,projLen);
+      line3(V(0,0,0),foot,C.proj,4);              // 投影段（沿 A）
+      line3(B,foot,C.projDash,1.5,[5,4]);          // 垂足虚线
+      dot3(foot,C.proj,3.5);
+      angleArc();
+    } else if(mode==='cross'){ /* no arc */ }
+    if(mode==='both') angleArc();
+
+    // ---- vectors A, B ----
+    arrow3(V(0,0,0),A,C.a,3,true); text3(A,'A',C.a,13,12,-4);
+    arrow3(V(0,0,0),B,C.b,3,true); text3(B,'B',C.b,13,12,-4);
+    dot3(V(0,0,0),'#fff',3.4);
+
+    updateReadout(d,Cv,la,lb,lc);
+  }
+
+  // ---- readout ----
+  const el=id=>document.getElementById(id);
+  const p1=n=>n.toFixed(1);
+  const f1=n=>(n>=0?'+':'−')+Math.abs(n).toFixed(1);
+  function updateReadout(d,Cv,la,lb,lc){
+    el('coA').textContent='('+p1(A.x)+', '+p1(A.y)+', '+p1(A.z)+')';
+    el('coB').textContent='('+p1(B.x)+', '+p1(B.y)+', '+p1(B.z)+')';
+    // dot
+    el('exprDot').innerHTML='('+p1(A.x)+')('+p1(B.x)+') + ('+p1(A.y)+')('+p1(B.y)+') + ('+p1(A.z)+')('+p1(B.z)+') = <span class="res">'+f1(d)+'</span>';
+    const cosv = (la>1e-4&&lb>1e-4)? d/(la*lb):0;
+    let dv;
+    if(Math.abs(cosv)<0.02) dv='<span class="pill f">垂直（θ=90°，投影=0）</span>';
+    else if(d>0) dv='<span class="pill f">夹角&lt;90° · 投影与 A 同向</span>';
+    else dv='<span class="pill f">夹角&gt;90° · 投影与 A 反向</span>';
+    el('vDot').innerHTML=dv;
+    // cross
+    el('exprCross').innerHTML=
+      'x: '+p1(A.y)+'·'+p1(B.z)+'−'+p1(A.z)+'·'+p1(B.y)+' = '+f1(Cv.x)+'<br>'+
+      'y: '+p1(A.z)+'·'+p1(B.x)+'−'+p1(A.x)+'·'+p1(B.z)+' = '+f1(Cv.y)+'<br>'+
+      'z: '+p1(A.x)+'·'+p1(B.y)+'−'+p1(A.y)+'·'+p1(B.x)+' = '+f1(Cv.z)+'　→ <span class="res">('+f1(Cv.x)+', '+f1(Cv.y)+', '+f1(Cv.z)+')</span>';
+    let cvd;
+    if(lc<0.05) cvd='<span class="pill s">A、B 共线 · 叉乘≈0 · 面积=0</span>';
+    else cvd='<span class="pill s">|A×B| = '+lc.toFixed(1)+' = 平行四边形面积</span>';
+    el('vCross').innerHTML=cvd;
+    // meta
+    el('mA').textContent=la.toFixed(1); el('mB').textContent=lb.toFixed(1);
+    const ang=(la>1e-4&&lb>1e-4)?Math.round(Math.acos(Math.max(-1,Math.min(1,d/(la*lb))))*180/Math.PI):0;
+    el('mAng').textContent=ang+'°';
+    // emphasis
+    el('blkDot').style.opacity = mode==='cross'?.42:1;
+    el('blkCross').style.opacity = mode==='dot'?.42:1;
+  }
+
+  // ---- sliders ----
+  const ids=[['ax','nax',A,'x'],['ay','nay',A,'y'],['az','naz',A,'z'],
+             ['bx','nbx',B,'x'],['by','nby',B,'y'],['bz','nbz',B,'z']];
+  ids.forEach(([sid,nid,obj,key])=>{
+    const sl=el(sid);
+    sl.addEventListener('input',()=>{ obj[key]=parseFloat(sl.value); el(nid).textContent=p1(obj[key]); draw(); });
+  });
+  function syncSliders(){
+    ids.forEach(([sid,nid,obj,key])=>{ el(sid).value=obj[key]; el(nid).textContent=p1(obj[key]); });
+  }
+
+  // ---- presets ----
+  const presets={
+    perp: [{x:3,y:0,z:0},{x:0,y:3,z:0}],
+    para: [{x:3,y:1,z:0},{x:1.5,y:0.5,z:0}],
+    ground:[{x:0,y:0,z:3},{x:3,y:0,z:0}],   // forward=+Z, target=+X(右) → Cross(f,t).y>0
+    reset:[{x:3,y:0,z:1.5},{x:1,y:2.5,z:1}]
+  };
+  document.querySelectorAll('.presets button').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const p=presets[btn.dataset.p]; if(!p)return;
+      Object.assign(A,p[0]); Object.assign(B,p[1]); syncSliders(); draw();
+    });
+  });
+
+  // ---- mode ----
+  const mb={dot:el('m-dot'),cross:el('m-cross'),both:el('m-both')};
+  Object.entries(mb).forEach(([k,b])=>b.addEventListener('click',()=>{
+    mode=k; Object.values(mb).forEach(x=>{x.classList.remove('on');x.setAttribute('aria-pressed','false');});
+    b.classList.add('on'); b.setAttribute('aria-pressed','true'); draw();
+  }));
+
+  // ---- orbit / zoom ----
+  let drag=false,lx=0,ly=0;
+  cv.addEventListener('pointerdown',e=>{drag=true;lx=e.clientX;ly=e.clientY;cv.setPointerCapture(e.pointerId);});
+  cv.addEventListener('pointermove',e=>{
+    if(!drag)return; const dx=e.clientX-lx, dy=e.clientY-ly; lx=e.clientX; ly=e.clientY;
+    yaw+=dx*0.008; pitch+=dy*0.008;
+    pitch=Math.max(-1.45,Math.min(1.45,pitch)); draw();
+  });
+  cv.addEventListener('pointerup',()=>drag=false);
+  cv.addEventListener('pointercancel',()=>drag=false);
+  cv.addEventListener('wheel',e=>{e.preventDefault();camDist=Math.max(5,Math.min(20,camDist+e.deltaY*0.01));draw();},{passive:false});
+
+  resize(); window.addEventListener('resize',resize);
+})();
+</script>
+</body>
+</html>
