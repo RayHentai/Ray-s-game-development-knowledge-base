@@ -33,13 +33,13 @@ https://rayhentai.github.io/Ray-s-game-development-knowledge-base
 
 ## 📁 文件位置
 
-| 内容 | 路径 |
-|------|------|
-| Quartz 工程 | `C:\Users\Administrator\quartz\` |
-| 笔记库 | `D:\OneDrive\文档\Obsidian\Hentai的知识库\` |
-| 同步脚本 | `C:\Users\Administrator\quartz\sync.ps1` |
-| 网站配置 | `C:\Users\Administrator\quartz\quartz.config.ts` |
-| 屏蔽文件配置 | `C:\Users\Administrator\quartz\.gitignore` |
+| 内容        | 路径                                               |
+| --------- | ------------------------------------------------ |
+| Quartz 工程 | `C:\Users\Administrator\quartz\`                 |
+| 笔记库       | `D:\OneDrive\文档\Obsidian\Hentai的知识库\`            |
+| 同步脚本      | `C:\Users\Administrator\quartz\sync.ps1`         |
+| 网站配置      | `C:\Users\Administrator\quartz\quartz.config.ts` |
+| 屏蔽文件配置    | `C:\Users\Administrator\quartz\.gitignore`       |
 
 ---
 
